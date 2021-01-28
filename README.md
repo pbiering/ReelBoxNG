@@ -4,11 +4,11 @@ ReelBox Next Generation Helper/Support Scripts/Tools/Code
 Content of this repository will support creating ReelBoxNG based on self-made mainboard exchange
 
 ## Support
-- DONE: frontpanel display
-- PARTIAL: frontpanel button (POWER-only so far)
+- DONE: frontpanel display (setup, control, progress feature)
+- DONE: frontpanel LEDs (setup, control, progress feature)
 - DONE: ReelBox remote control unit via frontpanel
-- DONE: frontpanel LEDs
-- DONE: netceiver
+- DONE: netceiver (preparation)
+- PARTIAL: frontpanel button (POWER-only so far)
 
 ## History
 starting with easyVDR, switching to BM2LTS, back to easyVDR, now running on vanilla Fedora Linux distribution
@@ -32,6 +32,10 @@ By scripts expected target for binaries would be: /opt/reel/sbin (use e.g. softl
 ### etc
 
 Contains script / config files, can be either stored directly in related OS directories or use softlink to the cloned directory
+
+### etc/vdr
+
+- remote.conf: remote control unit configuration file incl. ReelBox support
 
 ### etc/sysconfig
 
