@@ -1,0 +1,26 @@
+[Unit]
+Description=ReelBoxNG Frontpanel Progress 7
+
+ConditionFileIsExecutable=/opt/reel/sbin/easyvdr-lcd
+ConditionFileIsExecutable=/opt/reel/sbin/easyvdr-led
+
+Requires=reel-frontpanel-progress-6.service reel-progress-7.service
+After=reel-frontpanel-progress-6.service reel-progress-7.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-Frontpanel-Progress
+
+Type=oneshot
+
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/easyvdr-lcd progress start 7
+ExecStartPost=/opt/reel/sbin/easyvdr-led progress start 7
+
+ExecStop=/opt/reel/sbin/easyvdr-lcd progress stop 7
+ExecStopPost=/opt/reel/sbin/easyvdr-led progress stop 7
+
+
+[Install]
+WantedBy=multi-user.target

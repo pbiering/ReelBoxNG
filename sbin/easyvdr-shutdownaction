@@ -1,0 +1,66 @@
+#!/bin/bash
+
+#
+# VDR Shutdown Script  - Tobias Grimm <tg@e-tobi.net>
+# -------------------
+#
+# see README.Debian
+#
+# bugfix shutdown 07.02.15 Bleifuss
+# adding uptime   24.04.15 Bleifuss
+# 20201123/pbev: add support for ReelBoxNG
+
+[ -e /usr/lib/vdr/easyvdr-config-loader ] && . /usr/lib/vdr/easyvdr-config-loader
+
+SHUTDOWN_HOOKS_DIR="/usr/share/vdr/shutdown-hooks"
+[ ! -d "$SHUTDOWN_HOOKS_DIR" ] && SHUTDOWN_HOOKS_DIR="/opt/reel/share/vdr/shutdown-hooks"
+[ ! -d "$SHUTDOWN_HOOKS_DIR" ] && exit 0
+LOGGER="logger -t vdr-shutdownaction"
+svdrpsend="/usr/bin/svdrpsend"
+VDR_RUNTIME_LOG="/var/log/easyvdr/easyvdr-runtime.csv"
+
+
+osdmsg() {
+	# OSD message must be deferred, to let VDR display it AFTER the
+	# shutdown script has been executed
+	sleep 2
+	$svdrpsend MESG "$1"
+}
+
+shutdownhooks=`find $SHUTDOWN_HOOKS_DIR -maxdepth 1 -xtype f | sort`
+
+for shutdownhook in $shutdownhooks; do
+	TRY_AGAIN=0
+
+	if [ -x $shutdownhook ]; then
+		$LOGGER "executing $shutdownhook"
+		result_data=`$shutdownhook "$@"`
+	else
+		$LOGGER "executing $shutdownhook as shell script"
+		result_data=`/bin/bash $shutdownhook "$@"`
+	fi
+	result=$?
+	eval $result_data
+	if [ $result -ne 0 ] ; then 
+		$LOGGER "Shutdown aborted by $shutdownhook with exitcode $result"
+		osdmsg "Shutdown abgebrochen / Shutdown aborted!" &
+		[ -z "$ABORT_MESSAGE" ] || osdmsg "$ABORT_MESSAGE" &
+		exit $result
+	fi
+
+	if [ $TRY_AGAIN -gt 0 ] ; then
+		$LOGGER "$shutdownhook requests to try again in $TRY_AGAIN minutes" 
+		nohup sh -c "( sleep $(( $TRY_AGAIN * 60 )) && $svdrpsend \"HITK Power\" )" >/dev/null 2>&1 &
+		osdmsg "Shutdown aborted. Retry in $TRY_AGAIN minutes." &
+		exit 0
+	fi
+done
+
+if [ -e $VDR_RUNTIME_LOG -a -e /tmp/vdr_runtime_log.tmp ]; then
+	cat $VDR_RUNTIME_LOG | sed -e s/"SHUTDOWN-"/"$(date)"/g > /tmp/vdr_runtime_log.tmp
+	cat /tmp/vdr_runtime_log.tmp | sed -e s/"UPTIME-"/"$(uptime | cut -d'p' -f2 | cut -d',' -f1)"/g > $VDR_RUNTIME_LOG
+fi
+
+if [ -n "$SHUTDOWNCMD" ]; then
+	eval $SHUTDOWNCMD &
+fi

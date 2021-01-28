@@ -1,0 +1,24 @@
+[Unit]
+Description=ReelBoxNG Progress 7
+
+ConditionFileIsExecutable=/usr/bin/sleep
+
+Requires=reel-progress-6.service
+
+After=reel-progress-6.service reel-vdr-media-mount.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-Progress
+
+Type=oneshot
+
+RemainAfterExit=yes
+
+ExecStart=/usr/bin/sleep 0.5
+
+ExecStartPost=/usr/bin/sleep 0.5
+
+
+[Install]
+WantedBy=multi-user.target

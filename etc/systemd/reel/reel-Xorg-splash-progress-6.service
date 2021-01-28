@@ -1,0 +1,23 @@
+# reel Xorg splash
+
+[Unit]
+Description=ReelBox Xorg Splash Progress 6
+
+ConditionFileIsExecutable=/usr/bin/xv
+ConditionPathExists=/opt/reel/share/reel/ReelBoxNG.png
+
+Requires=reel-Xorg-splash-progress-5.service reel-progress-6.service
+
+After=reel-Xorg-splash-progress-5.service reel-progress-6.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-Xorg-Splash-Progress-6
+
+Type=simple
+
+ExecStart=/usr/bin/xv -display :0 -viewonly -fixed -geo 100x100+850+600 /opt/reel/share/reel/ReelBoxNG.png
+
+
+[Install]
+WantedBy=multi-user.target

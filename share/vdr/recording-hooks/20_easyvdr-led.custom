@@ -1,0 +1,101 @@
+#!/bin/bash
+#
+# recording hook to control LED
+#
+# (P) & (C) 2020-2021 by Peter Bieringer (pb@bieringer.de) - pbev
+# License: GPLv2
+#
+# 20200325/pbev: initial
+# 20201123/pbev: add support for ReelBoxNG
+# 20201213/pbev: add support for editing
+# 20201018/pbev: add support for moving and combine with editing
+
+if [ -x /usr/lib/easyvdr/easyvdr-start/easyvdr-led ]; then
+ 	script="/usr/lib/easyvdr/easyvdr-start/easyvdr-led"      
+elif [ -x /opt/reel/sbin/easyvdr-led ]; then
+ 	script="/opt/reel/sbin/easyvdr-led"      
+else
+	exit 0
+fi
+
+pppid=$(ps -o ppid -p $PPID --no-headers | head -1 | awk '{ print $1 }')
+file_recording_counter=/var/tmp/vdr.recording.$pppid
+file_busy_counter=/var/tmp/vdr.busy.$pppid
+
+case $1 in
+    before)
+	# enable LED
+	if [ ! -f "$file_recording_counter" -o ! -s "$file_recording_counter" ]; then
+		# set counter
+		counter=1
+	else
+		# get counter
+		counter=$(cat "$file_recording_counter")
+		counter=$[ $counter + 1 ]
+	fi
+
+	echo "$counter" >$file_recording_counter
+
+	if [ $counter -ge 1 ]; then
+		$script recording counter=$counter
+	fi
+        ;;
+
+    after)
+	# disable LED if 0
+	if [ ! -f "$file_recording_counter" -o ! -s "$file_recording_counter" ]; then
+		# default counter
+		counter=0
+	else
+		# get counter
+		counter=$(cat "$file_recording_counter")
+		counter=$[ $counter -1 ]
+	fi
+
+	[ $counter -lt 0 ] && counter=0
+
+	echo "$counter" >$file_recording_counter
+
+	if [ $counter -le 0 ]; then
+		$script recordingOff
+	fi
+        ;;
+
+    editing|copying)
+	# enable LED
+	if [ ! -f "$file_busy_counter" -o ! -s "$file_busy_counter" ]; then
+		# set counter
+		counter=1
+	else
+		# get counter
+		counter=$(cat "$file_busy_counter")
+		counter=$[ $counter + 1 ]
+	fi
+
+	echo "$counter" >$file_busy_counter
+
+	if [ $counter -ge 1 ]; then
+		$script busy counter=$counter
+	fi
+        ;;
+
+    edited|copied)
+	# disable LED if 0
+	if [ ! -f "$file_busy_counter" -o ! -s "$file_busy_counter" ]; then
+		# default counter
+		counter=0
+	else
+		# get counter
+		counter=$(cat "$file_busy_counter")
+		counter=$[ $counter -1 ]
+	fi
+
+	[ $counter -lt 0 ] && counter=0
+
+	echo "$counter" >$file_busy_counter
+
+	if [ $counter -le 0 ]; then
+		$script busyOff
+	fi
+        ;;
+esac

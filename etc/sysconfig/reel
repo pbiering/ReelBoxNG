@@ -1,0 +1,12 @@
+# ReelBoxNG
+LCD="yes"
+LCD_DRIVER="st7565r-reel"
+LCD_DEVICE="/dev/ttyS0"
+GRAPHLCDIMAGEDIR="/opt/reel/share/images"
+GRAPHLCDIMAGEPREFIX="image-128x64-reelboxng-"
+MCLI_DEVICE="enp4s0"
+WAKEUP_FILE_DEFAULT="/run/vdr/next-timer-reel"
+RECORDINGSDIR="/var/lib/vdr/video/"
+AUDIO_DEVICE="plughw:0,3"
+VIDEO_RESOLUTION="1920x1080"
+#VIDEO_RESOLUTION="3840x2160"

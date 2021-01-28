@@ -1,0 +1,366 @@
+#!/bin/sh
+#
+# easyVDR/ReelBoxNG LCD setup/progress support
+#
+# (P) & (C) 2020-2021 by Peter Bieringer (pb@bieringer.de) - pbev
+# License: GPLv2
+#
+# supporting
+#  - ReelBox
+#  - "standard"
+#
+# 20200321/pbev: initial version, takeover from selfmade initscript
+# 20200322/pbev: merge progress feature and adjust to be independent from ReelBox
+# 20200325/pbev: further improvements
+# 20200326/pbev: add support for displaying wakeup time in LCD (in case of supported in power-off state)
+# 20200328/pbev: review
+# 20200728/pbev: align WAKEUP_FILE_DEFAULT
+# 20201119/pbev: add support for ReelBoxNG
+
+progname="$(basename "$0")"
+
+## syslog
+log() {
+	local level="$1"
+	shift
+	local message="$*"
+
+	if [ -t 0 ]; then
+		printf "%-6s: %s\n" "$level" "$progname: $message"
+	fi
+	logger -t "$progname" -p "$level" "$message"
+}
+
+## pre-check
+if [ -e /usr/lib/vdr/easyvdr-config-loader ]; then
+	# easyVDR
+	. /usr/lib/vdr/easyvdr-config-loader
+elif [ -e /etc/sysconfig/reel ]; then
+	# ReelBoxNG
+	. /etc/sysconfig/reel
+else
+	log "ERROR" "unsupported environment (neither easyVDR nor ReelBoxNG)"
+fi
+
+# config file with default
+GRAPHLCDCONF="${GRAPHLCDCONF:-/etc/graphlcd.conf}"
+
+# image directory with default
+GRAPHLCDIMAGEDIR="${GRAPHLCDIMAGEDIR:-/usr/share/easyvdr/images/graphlcd}"
+
+# image prefix with default
+GRAPHLCDIMAGEPREFIX="${GRAPHLCDIMAGEPREFIX:-image-128x64-easyvdr-}"
+
+# font directory with default
+GRAPHLCDFONTDIR="${GRAPHLCDFONTDIR:-/usr/share/vdr/plugins/graphlcd/fonts}"
+
+# default wakeup file from /usr/share/vdr/shutdown-hooks/10_shutdown.acpi (WAKEUP_FILE)
+# content: <unixtime of wakeup> [<flag for regular>]
+WAKEUP_FILE_DEFAULT="${WAKEUP_FILE_DEFAULT:-/var/cache/vdr/acpiwakeup.time}"
+
+
+#####################
+### support functions
+#####################
+
+## get runlevel
+getRunlevel() {
+	if [ -n "$RUNLEVEL" ]; then
+		return "$RUNLEVEL"
+	fi
+
+	if [ -x /usr/bin/systemctl ]; then
+		if /usr/bin/systemctl list-jobs | egrep -q 'reboot.target.*start'; then
+			return 6
+		elif /usr/bin/systemctl list-jobs | egrep -q 'shutdown.target.*start'; then
+			return 0
+		fi
+	fi
+
+	local runlevel=$(runlevel)
+	return ${runlevel/* /}
+}
+
+#####################
+### LCD functions
+#####################
+
+## progress frontpanel
+progressFrontpanel() {
+	local ret=0
+	local action="$1"
+	local step="$2" # can be optional
+
+	local runlevel=$(runlevel) 
+
+	if [ -z "$action" ]; then
+		log "ERROR" "progressFrontpanel/no action given"
+		return 1
+	fi
+
+	if [ "$action" = "runlevel" ]; then
+		action=""
+		getRunlevel
+		local runlevel=$?
+
+		# in case RUNLEVEL is set
+		case $runlevel in
+			6)
+				action="reboot"
+				;;
+			0)
+				action="shutdown"
+				;;
+		esac
+	else
+		# translating
+		case $action in
+			start)
+				action="starting"
+				;;
+			stop)
+				action="stopping"
+				;;
+		esac
+		if [ -n "$step" ]; then
+			action="$action-progress-$step"
+		fi
+	fi
+
+	[ -z "$action" ] && return
+
+	local image="$GRAPHLCDIMAGEDIR/${GRAPHLCDIMAGEPREFIX}${action}.pnm"
+	if [ ! -e "$image" ]; then
+		log "ERROR" "progressFrontpanel/image is not existing: $image"
+		return 1
+	fi
+
+	log "INFO" "progressFrontpanel/display image on LCD '$LCD_DRIVER': $image"
+	if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+		[ -x /opt/reel/sbin/reelbox-control.sh ] || return
+		# ReelBox is also supporting showpic, but native call is more nice (avoiding short display of "black")
+		/opt/reel/sbin/reelbox-control.sh image_frontpanel $image
+		ret=$?
+	else
+		[ -x /usr/bin/showpic ] || return
+		/usr/bin/showpic -c $GRAPHLCDCONF -d $LCD_DRIVER $showpic_option $image
+		ret=$?
+	fi
+
+	sleep 0.3
+
+	return $ret
+}
+
+## display text on frontpanel
+textFrontpanel() {
+	local ret=0
+
+	log "INFO" "textFrontpanel/display text on LCD '$LCD_DRIVER': $*"
+	if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+		[ -x /opt/reel/sbin/reelbox-control.sh ] || return
+		/opt/reel/sbin/reelbox-control.sh text_frontpanel $*
+		ret=$?
+	else
+		[ -x /usr/bin/showtext ] || return
+		local font="$GRAPHLCDFONTDIR/f8b.fnt"
+		[ -e "$font" ] || return
+		/usr/bin/showtext -c $GRAPHLCDCONF -d $LCD_DRIVER -e "utf-8" -f "fnt:$font" "$*"
+	fi
+
+	## TODO add support for other frontpanels
+
+	return $ret
+}
+
+
+## set frontpanel
+setFrontpanel() {
+	local ret=0
+
+	if [ "$1" = "stop" -a "$2" = "runlevel" ]; then
+		getRunlevel
+		local runlevel=$?
+		case $runlevel in
+			6)
+				progressFrontpanel reboot
+				;;
+			0)
+				if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+					[ -x /opt/reel/sbin/reelbox-control.sh ] || return
+					/opt/reel/sbin/reelbox-control.sh set_frontpanel stop
+					ret=$?
+					textFrontpanelWakeup
+				else
+					true
+					## TODO add support for other frontpanels
+				fi
+				;;
+			*)
+				log "NOTICE" "nothing to do with 'setFrontpanel $*', runlevel: $runlevel"
+		esac
+	else
+		if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+			[ -x /opt/reel/sbin/reelbox-control.sh ] || return
+			/opt/reel/sbin/reelbox-control.sh set_frontpanel $*
+			ret=$?
+		else
+			true
+			## TODO add support for other frontpanels
+		fi
+	fi
+
+	return $ret
+}
+
+## display wakeup time in Frontpanel (only internally used on "stop" and runlevel="reboot")
+# /usr/share/vdr/shutdown-hooks/10_shutdown.acpi has to store at least timer into /var/cache/vdr/wakeup.time
+# in case a 2nd time (regular wakeuptime) is stored, the final text is changed (TIMER->REGUL)
+textFrontpanelWakeup() {
+	# default from /usr/share/vdr/shutdown-hooks/10_shutdown.acpi
+	local WAKEUP_FILE="${1:-$WAKEUP_FILE_DEFAULT}"
+
+	local text="NO-WAKEUP"	# default
+
+	if [ ! -e $WAKEUP_FILE -o ! -s "$WAKEUP_FILE" ]; then
+		log "NOTICE" "no wakeup file found or empty: $WAKEUP_FILE"
+	else
+		local wakeup_time=$(cat $WAKEUP_FILE 2>/dev/null)
+
+		if [ -z "$wakeup_time" ]; then
+			log "NOTICE" "no content found in wakeup file: $WAKEUP_FILE"
+		else
+			log "INFO" "content found in wakeup file: $WAKEUP_FILE ($wakeup_time)"
+			local times=( $wakeup_time )	# split into array
+			if [ ${times[0]} -gt 0 ]; then
+				text="$(date -d @${times[0]} '+%d.%m. %H:%M')"
+				if [ -n "${times[1]}" ]; then
+					text="REGUL-WU: $text"
+				else
+					text="TIMER-WU: $text"
+				fi
+			fi
+		fi
+	fi
+	textFrontpanel -clock "$text"
+}
+
+#####################
+### Chassis functions
+#####################
+
+## check frontpanel
+checkFrontpanel() {
+	local ret=0
+	if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+		# TODO: improve proper setup
+		if [ -z "$LCD_DEVICE" -o ! -e "$LCD_DEVICE" -o ! -c "$LCD_DEVICE" ]; then
+			log "ERROR" "LCD_DRIVER setup issue: $LCD_DRIVER"
+			return 1
+		fi
+	fi
+	return $ret
+}
+
+## setup frontpanel
+setupFrontpanel() {
+	local ret=0
+	if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+		## setup ReelBox frontpanel (LCD+LED support)
+		# TODO: add support for USB
+		if [ -z "$LCD_DEVICE" ]; then
+			log "ERROR" "required LCD_DEVICE is empty"
+			return 1
+		elif [ ! -e "$LCD_DEVICE" ]; then
+			log "ERROR" "configured LCD_DEVICE is not existing: $LCD_DEVICE"
+			return 1
+		elif [ ! -c "$LCD_DEVICE" ]; then
+			log "ERROR" "configured LCD_DEVICE is existing, but not a char device: $LCD_DEVICE"
+			return 1
+		fi
+		[ -x /opt/reel/sbin/reelbox-control.sh ] || return
+		/opt/reel/sbin/reelbox-control.sh setup_frontpanel $LCD_DEVICE
+		local ret=$?
+	fi
+
+	## TODO add support for other frontpanels if required
+
+	return $ret
+}
+
+
+#####################
+### MAIN
+#####################
+
+# check for active LCD
+if [ -z "$LCD" ]; then
+	log "NOTICE" "no LCD configured ('LCD' is empty): nothing to do: $*"
+	exit 0
+fi
+
+if [ -z "$LCD_DRIVER" ]; then
+	log "NOTICE" "no LCD_DRIVER configured ('LCD_DRIVER' is empty): nothing to do: $*"
+	exit 0
+fi
+
+# directory containing images
+case $LCD_DRIVER in
+	st7565r-reel)
+		showpic_option="-i -S 2"
+		;;
+	*)
+		# TODO
+		true
+		;;
+esac
+	    
+log "INFO" "called with: $*"
+case "$1" in
+        start)
+		setupFrontpanel || exit 1
+		setFrontpanel $*
+		;;
+        stop|started|stopping)
+		checkFrontpanel || exit 1
+		setFrontpanel $*
+		;;
+        status)
+		return 0
+		;;
+        restart)
+		return 0
+		;;
+        progress)
+		shift
+		checkFrontpanel || exit 1
+		progressFrontpanel $*
+		;;
+        text)
+		shift
+		checkFrontpanel || exit 1
+		textFrontpanel $*
+		;;
+        textWakeup)
+		shift
+		checkFrontpanel || exit 1
+		textFrontpanelWakeup $*
+		;;
+        *)	cat <<END
+Usage: $0 ...
+  start				setup and enable LCD
+  stop				disable LCD
+  stop [runlevel]		set LCD according to runlevel
+  progress start|stop <step>    set LCD depending on progress
+  text <text>			display 'text' on LCD
+  textWakeup [<file>]		display 'wakeup' text from time in $WAKEUP_FILE_DEFAULT or <file>
+
+  active configuration
+    GRAPHLCDCONF="$GRAPHLCDCONF}
+    GRAPHLCDIMAGEDIR="$GRAPHLCDIMAGEDIR
+    GRAPHLCDIMAGEPREFIX="$GRAPHLCDIMAGEPREFIX
+    GRAPHLCDFONTDIR=$GRAPHLCDFONTDIR
+    WAKEUP_FILE_DEFAULT=$WAKEUP_FILE_DEFAULT
+END
+		;;
+esac

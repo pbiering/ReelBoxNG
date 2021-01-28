@@ -1,0 +1,24 @@
+[Unit]
+Description=ReelBoxNG VDR MCLI preparation
+
+ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
+ConditionFileNotEmpty=/etc/sysconfig/reel
+
+Requires=network.target
+After=network.target reel-frontpanel.service
+Before=vdr.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-vdr-mcli-preparation
+
+EnvironmentFile=/etc/sysconfig/reel
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/reelbox-control.sh setup_netceiver $MCLI_DEVICE
+
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,269 @@
+#!/bin/sh
+#
+# easyVDR/ReelBoxNG LED setup/progress support
+#
+# (P) & (C) 2020-2021 by Peter Bieringer (pb@bieringer.de) - pbev
+# License: GPLv2
+#
+# supporting
+#  - ReelBox
+#
+# 20200325/pbev: new
+# 20200328/pbev: review
+# 20201119/pbev: add support for ReelBoxNG
+# 20201123/pbev: add support for logging of provided counter
+# 20201224/pbev: do not use 'remote' for 'cutting'
+# 20210118/pbev: replace 'cutting' by 'busy'
+
+progname="$(basename "$0")"
+
+## syslog
+log() {
+	local level="$1"
+	shift
+	local message="$*"
+
+	if [ -t 0 ]; then
+		printf "%-6s: %s\n" "$level" "$progname: $message"
+	fi
+	logger -t "$progname" -p "$level" "$message"
+}
+
+## pre-check
+if [ -e /usr/lib/vdr/easyvdr-config-loader ]; then
+	# easyVDR
+	. /usr/lib/vdr/easyvdr-config-loader
+
+elif [ -e /etc/sysconfig/reel ]; then
+	# ReelBoxNG
+	. /etc/sysconfig/reel
+else
+	log "ERROR" "unsupported environment (neither easyVDR nor ReelBoxNG)"
+fi
+
+# default wakeup file from /usr/share/vdr/shutdown-hooks/10_shutdown.acpi (WAKEUP_FILE)
+# content: <unixtime of wakeup> [<flag for regular>]
+WAKEUP_FILE_DEFAULT="${WAKEUP_FILE_DEFAULT:-/var/cache/vdr/acpiwakeup.time}"
+
+
+#####################
+### support functions
+#####################
+
+## get runlevel
+getRunlevel() {
+	if [ -n "$RUNLEVEL" ]; then
+		return "$RUNLEVEL"
+	fi
+
+	if [ -x /usr/bin/systemctl ]; then
+		if /usr/bin/systemctl list-jobs | egrep -q 'reboot.target.*start'; then
+			return 6
+		elif /usr/bin/systemctl list-jobs | egrep -q 'shutdown.target.*start'; then
+			return 0
+		fi
+	fi
+
+	local runlevel=$(runlevel)
+	return ${runlevel/* /}
+}
+
+
+#####################
+### LED functions
+#####################
+
+## set frontpanel
+setLED() {
+	local ret=0
+	local WAKEUP_FILE="$WAKEUP_FILE_DEFAULT"
+
+	if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+		## ReelBox frontpanel support LCD and LED in once
+		[ -x /opt/reel/sbin/reelbox-control.sh ] || return
+
+		if [ "$1" = "stop" -a "$2" = "runlevel" ]; then
+			getRunlevel
+			local runlevel=$?
+			case $runlevel in
+				6)
+					# reboot
+					/opt/reel/sbin/reelbox-control.sh set_led_status ALL blink
+					ret=$?
+					;;
+				0)
+					# shutdown
+					/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
+					/opt/reel/sbin/reelbox-control.sh set_led_button off
+					if [ -e "$WAKEUP_FILE" -a -s "$WAKEUP_FILE" ]; then
+						local wakeup_time=$(cat $WAKEUP_FILE 2>/dev/null)
+						if [ -n "$wakeup_time" ]; then
+							local times=( $wakeup_time )    # split into array
+							if [ ${times[0]} -gt 0 ]; then
+								# pending recording, set "standby"
+								/opt/reel/sbin/reelbox-control.sh set_led_status standby on 8
+							fi
+							if [ -n "${times[1]}" ]; then
+								# caused by max-wakeup, set "remote"
+								/opt/reel/sbin/reelbox-control.sh set_led_status remote on 8
+							fi
+						fi
+					fi
+					/opt/reel/sbin/reelbox-control.sh set_led_status power on
+					ret=$?
+					;;
+				*)
+					log "NOTICE" "nothing to do with 'setLED $*', runlevel: $runlevel"
+			esac
+		else
+			case $1 in
+			    recording)
+				/opt/reel/sbin/reelbox-control.sh set_led_status record on
+				;;
+			    recordingOff)
+				/opt/reel/sbin/reelbox-control.sh set_led_status record off
+				;;
+			    busy)
+				/opt/reel/sbin/reelbox-control.sh set_led_status standby blink
+				;;
+			    busyOff)
+				/opt/reel/sbin/reelbox-control.sh set_led_status standby off
+				;;
+			    started)
+				/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
+				/opt/reel/sbin/reelbox-control.sh set_led_button off
+				/opt/reel/sbin/reelbox-control.sh set_led_status power on
+				;;
+			    stopping)
+				/opt/reel/sbin/reelbox-control.sh set_led_status standby blink
+				/opt/reel/sbin/reelbox-control.sh set_led_button red
+				;;
+			    stop)
+				/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
+				/opt/reel/sbin/reelbox-control.sh set_led_button off
+				/opt/reel/sbin/reelbox-control.sh set_led_status power on
+				;;
+			    error)
+				/opt/reel/sbin/reelbox-control.sh set_led_status record blink
+				/opt/reel/sbin/reelbox-control.sh set_led_status remote blink
+				/opt/reel/sbin/reelbox-control.sh set_led_status standby off
+				;;
+			    start)
+				/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
+				/opt/reel/sbin/reelbox-control.sh set_led_status power on
+				/opt/reel/sbin/reelbox-control.sh set_led_status standby blink
+				;;
+			    progress)
+				local action="$2"
+				local progress="$3"
+				case $progress in
+				    0)
+					/opt/reel/sbin/reelbox-control.sh set_led_status standby blink
+					/opt/reel/sbin/reelbox-control.sh set_led_button red
+					;;
+				    1)
+					/opt/reel/sbin/reelbox-control.sh set_led_button pink
+					;;
+				    2)
+					/opt/reel/sbin/reelbox-control.sh set_led_button blue
+					;;
+				    3)
+					/opt/reel/sbin/reelbox-control.sh set_led_status remote blink
+					/opt/reel/sbin/reelbox-control.sh set_led_button red
+					;;
+				    4)
+					/opt/reel/sbin/reelbox-control.sh set_led_button pink
+					;;
+				    5)
+					/opt/reel/sbin/reelbox-control.sh set_led_button blue
+					;;
+				    6)
+					/opt/reel/sbin/reelbox-control.sh set_led_status record blink
+					/opt/reel/sbin/reelbox-control.sh set_led_button red
+					;;
+				    7)
+					/opt/reel/sbin/reelbox-control.sh set_led_button pink
+					;;
+				    8)
+					/opt/reel/sbin/reelbox-control.sh set_led_button blue
+					;;
+				    *)
+					log "ERROR" "unsupported progress value: $progress"
+				esac
+				;;
+			esac
+			ret=$?
+		fi
+	fi
+
+	## TODO add support for other LED controls
+
+	return $ret
+}
+
+## setup LED
+setupLED() {
+	local ret=0
+	if [ "$LCD_DRIVER" = "st7565r-reel" ]; then
+		## ReelBox frontpanel support LCD and LED in once
+		# TODO: add support for USB
+		[ -z "$LCD_DEVICE" ] && return
+		[ -e "$LCD_DEVICE" ] || return
+		[ -c "$LCD_DEVICE" ] || return
+
+		[ -x /opt/reel/sbin/reelbox-control.sh ] || return
+		/opt/reel/sbin/reelbox-control.sh setup_frontpanel $LCD_DEVICE
+		local ret=$?
+	fi
+
+	## TODO add support for other LED if required
+
+	return $ret
+}
+
+
+#####################
+### MAIN
+#####################
+
+log "INFO" "called with: $*"
+case "$1" in
+        start)
+		setupLED
+		setLED $*
+            ;;
+         
+        stop)
+		setLED $*
+            ;;
+         
+        status)
+		return 0
+            ;;
+
+        restart)
+		return 0
+            ;;
+
+        started|stopping|recording|recordingOff|busy|busyOff|error|progress)
+		setLED $*
+            ;;
+
+        *)
+		cat <<END
+Usage: $0 ...
+  start				setup and enable LEDs
+  stop				disable LEDs
+  stop [runlevel]		set LEDs depending on to detected runlevel
+  progress start|stop <step>	set LEDs depending on progress
+  error 			set LEDs to signal error
+  restart|status		(no action)
+  started|stopping		set LEDs related
+  recording [<counter>]		enable 'recording' LED
+  recordingOff [<counter>]	disable 'recording' LED
+  busy [<counter>]		enable 'busy' LED
+  busyOff [<counter>]		disable 'busy' LED
+END
+            exit 1
+            ;;
+esac

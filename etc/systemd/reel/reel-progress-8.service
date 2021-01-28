@@ -1,0 +1,26 @@
+[Unit]
+Description=ReelBoxNG Progress 8
+
+ConditionFileIsExecutable=/usr/bin/sleep
+
+Requires=reel-progress-7.service
+
+After=reel-progress-7.service
+
+Before=vdr.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-Progress
+
+Type=oneshot
+
+RemainAfterExit=yes
+
+ExecStart=/usr/bin/sleep 0.5
+
+ExecStartPost=/usr/bin/sleep 0.5
+
+
+[Install]
+WantedBy=multi-user.target

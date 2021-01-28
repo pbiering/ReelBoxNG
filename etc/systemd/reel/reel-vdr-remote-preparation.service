@@ -1,0 +1,21 @@
+[Unit]
+Description=ReelBoxNG VDR Remote Preparation
+
+ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
+
+Requires=reel-frontpanel.service
+After=reel-frontpanel.service
+Before=vdr.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-vdr-remote-preparation
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/reelbox-control.sh setup_remote
+
+
+[Install]
+WantedBy=multi-user.target

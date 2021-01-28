@@ -1,0 +1,24 @@
+[Unit]
+Description=ReelBoxNG Progress 3
+
+ConditionFileIsExecutable=/usr/bin/sleep
+
+Requires=reel-progress-2.service
+
+After=reel-progress-2.service reel-vdr-remote-preparation.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-Progress
+
+Type=oneshot
+
+RemainAfterExit=yes
+
+ExecStart=/usr/bin/sleep 0.5
+
+ExecStartPost=/usr/bin/sleep 0.5
+
+
+[Install]
+WantedBy=multi-user.target

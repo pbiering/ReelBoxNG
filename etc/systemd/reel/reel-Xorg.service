@@ -1,0 +1,22 @@
+# start vdr-fbfe
+
+[Unit]
+Description=ReelBox Xorg Start
+
+ConditionFileIsExecutable=/usr/bin/Xorg
+
+#After=network.target
+
+Before=vdr.service reel-Xorg-splash.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-Xorg-Start
+
+Type=simple
+
+ExecStart=/usr/bin/Xorg -nocursor -s 999
+
+
+[Install]
+WantedBy=multi-user.target
