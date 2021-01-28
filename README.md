@@ -17,8 +17,6 @@ starting with easyVDR, switching to BM2LTS, back to easyVDR, now running on vani
 Note: in case of taking use in easyVDR or BM2LTS, please feed back all required extensions via Pull Requests
 
 ## Coming next
-- helper scripts
-- code
 - schematics for frontpanel connection (serial and towards mainboard)
 
 ## Content
