@@ -54,6 +54,10 @@ Contains script / config files, can be either stored directly in related OS dire
 
 systemd (example) files for preparation and progress
 
+### etc/systemd/system/vdr.service.d
+
+- etc/systemd/system/vdr.service.d/override.conf: set CAP_NET_RAW required by vdr if mcli plugin is used (otherwise it cannot listen on the given interface using raw socket)
+
 ### sbin
 
 - sbin/easyvdr-recordingaction: imported+extended from easyVDR
