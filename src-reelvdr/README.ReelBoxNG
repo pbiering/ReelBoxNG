@@ -3,3 +3,16 @@ required source code pulled from
 https://github.com/suborb/reelvdr.git
 
 - several fixes applied
+
+
+# Build+Install
+
+push utils/reelfpctl/
+make
+cp reelfpctl /opt/reel/sbin
+popd
+
+pushd utils/reelbox-control
+make
+cp reelbox-ctrld /opt/reel/sbin
+popd
