@@ -3,7 +3,7 @@ ReelBox Next Generation Helper/Support Scripts/Tools/Code
 
 Content of this repository will support creating ReelBoxNG based on self-made mainboard exchange
 
-## Support
+## Features
 - DONE: frontpanel display (setup, control, progress feature)
 - DONE: frontpanel LEDs (setup, control, progress feature)
 - DONE: ReelBox remote control unit via frontpanel
@@ -11,10 +11,13 @@ Content of this repository will support creating ReelBoxNG based on self-made ma
 - PARTIAL: frontpanel button (POWER-only so far)
 
 ## History
-starting with easyVDR, switching to BM2LTS, back to easyVDR, now running on vanilla Fedora Linux distribution
+Starting with easyVDR, switching to BM2LTS, back to easyVDR, now running on vanilla Fedora Linux distribution
 
 ## Notes
-Note: in case of taking use in easyVDR or BM2LTS, please feed back all required extensions via Pull Requests
+In case of taking use in easyVDR or BM2LTS or local, please feed back all required extensions in an unbreaking compatibility was via github Pull Request
+
+## Issues
+Please use github's issue tracker
 
 ## Coming next
 - schematics for frontpanel connection (serial and towards mainboard)
@@ -73,3 +76,16 @@ very simple "ReelBoxNG" log
 ### share/vdr
 
 - recording-hooks/20_easyvdr-led.custom: hook script to control the recording LED and (upcoming in VDR > 2.5.1) standby LED in case of editing/copying
+
+## Further information
+
+### Required plugins
+
+## mcli
+
+- Use 0.9.7 or newer from https://github.com/vdr-projects/vdr-plugin-mcli
+
+## graphlcd
+
+- ReelBox skin will be hopefully integrated in next release (1.0.3), for now: https://github.com/vdr-projects/vdr-plugin-graphlcd/pull/4
+- Select "st7565r-reel" as driver
