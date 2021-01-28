@@ -1,0 +1,16 @@
+- wakeup reasons:
+
+Die Hex-Antwort ist so codiert;
+
+00 00 RR U1 U2 U3 U4
+
+RR: Wakeup reason: (cleared to 0 after request)
+1: power cycle
+2: FP issued reset
+3: wakeup from standby by Keyboard/FP Power Button
+4: wakeup from standby by IR
+5: timer wakeup
+6: WOL
+
+U1-U4: Wakeup Unixtime (U1: MSB, U4: LSB)
+(also die Zeit, durch die aufgeweckt wurde).

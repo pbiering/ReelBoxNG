@@ -4,6 +4,12 @@ ReelBox Next Generation Helper/Support Scripts/Tools/Code
 ## Content
 Content of this repository will support creating ReelBoxNG based on self-made mainboard exchange
 
+### src-reelvdr
+
+Contain source code for
+- reelfpctl
+- reelbox-ctrld
+
 ## Support
 - DONE: frontpanel display
 - PARTIAL: frontpanel button (POWER-only so far)

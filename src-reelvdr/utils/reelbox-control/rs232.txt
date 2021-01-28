@@ -1,0 +1,61 @@
+Avantgarde RS232 remote control:
+
+Enable in Setup-GUI
+
+Default speed 115200 Baud, 8N1
+
+Commands are completed with a Newline (\n) or Carriage Return (\r). When
+concatenating commands in a line, they must be seperated with space. Up to
+255 characters are allowed in a line. All commands are case sensitive. Each
+line is acknowledged with "OK".
+
+The following commands are allowed and are equivalent to the key press at
+the IR remote control:
+
+0 1 2 3 4 5 6 7 8 9
+Up Down Left Right
+Menu Ok Back Setup Timers
+Red Green Yellow Blue
+Channel+ Channel-
+Mute Volume+ Volume-
+Play Pause Stop Record FastRwd FastFwd
+Greater
+DVB DVD PVR Reel
+Power (but see below)
+
+The following commands correspond to the remote key:
+
+Info = ?-kex
+TT = Teletext-kex
+PiP = PiP-key
+Audio = <-key
+
+The following commands correspond to the shifted key state:
+
+Aspect = shift <
+Eject = shift Stop
+Help = shift ?
+Search = shift Timers
+User1 = shift DVB
+User2 = shift DVD
+User3 = shift PVR
+User4 = shift Reel
+User5 = shift Teletext
+User6 = shift PiP
+
+The following commands are special and not recognized by vdr otherwise:
+(These functions need to be more tested)
+
+Startup  : Leave standby state
+Standby  : Go into standby (or stay there)
+Poweroff : Go into Deep Standby (max power saving)
+
+Examples:
+
+Back Back Back Back Back Back \n = Leave almost all menus
+1 2 3 OK \n  = switch to channel 123
+
+
+
+
+
