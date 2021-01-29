@@ -98,5 +98,5 @@ very simple "ReelBoxNG" log
 
 ## graphlcd
 
-- ReelBox skin will be hopefully integrated in next release (1.0.3), for now: https://github.com/vdr-projects/vdr-plugin-graphlcd/pull/4
+- ReelBox skin is integrated since release 1.0.3
 - Select "st7565r-reel" as driver
