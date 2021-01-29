@@ -3,6 +3,8 @@ ReelBox Next Generation Helper/Support Scripts/Tools/Code
 
 Content of this repository will support creating ReelBoxNG based on self-made mainboard exchange
 
+See also Wiki: https://github.com/pbiering/ReelBoxNG/wiki
+
 ## Features
 - DONE: frontpanel display (setup, control, progress feature)
 - DONE: frontpanel LEDs (setup, control, progress feature)
@@ -45,6 +47,11 @@ Contains script / config files, can be either stored directly in related OS dire
 - etc/sysconfig/reel: config file related to ReelBox
 
 - etc/sysconfig/vdr (not shown): suggested action options would be: --shutdown=/opt/reel/sbin/easyvdr-shutdownaction --record /opt/reel/sbin/easyvdr-recordingaction
+
+### etc/sysconfig/vdr-plugins.d/
+
+- etc/sysconfig/vdr-plugins.d/graphlcd.conf: example for graphlcd plugin configuration
+- etc/sysconfig/vdr-plugins.d/mcli.conf: example for mcli plugin configuration
 
 ### etc/X11
 
