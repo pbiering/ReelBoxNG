@@ -11,6 +11,7 @@ See also Wiki: https://github.com/pbiering/ReelBoxNG/wiki
 - DONE: ReelBox remote control unit via frontpanel
 - DONE: netceiver (preparation)
 - PARTIAL: frontpanel button (POWER-only so far)
+- NOTPLANNED: add support for eHD (too complicated: kernel module must be enriched for 64-bit, related plugin must be ported to VDR 2.4 and shrinked to functionality which is able to be supported without tweaking VDR upstream)
 
 ## History
 Starting with easyVDR, switching to BM2LTS, back to easyVDR, now running on vanilla Fedora Linux distribution
