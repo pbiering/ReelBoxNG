@@ -76,10 +76,16 @@ systemd (example) files for preparation and progress
 
 ### share/images
 
-progress images for
+start/stop/reboot/progress images (can be configured by GRAPHLCDIMAGEPREFIX, see /etc/sysconfig/reel)
 - DONE: "ReelBoxNG"
-- ON-REQUEST: "BM2LTS" (have to recreate them)
-- ON-REQUEST: "easyVDR" (have to recreate them)
+- DONE: "BM2LTS"
+- DONE: "easyVDR"
+
+#### share/images/generator
+
+- image source (XCF)
+- image templates
+- image generator script
 
 ### share/reel
 

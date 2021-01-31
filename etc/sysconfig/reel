@@ -1,12 +1,34 @@
-# ReelBoxNG
+### ReelBoxNG
+
+## LCD active at all
 LCD="yes"
+
+## LCD driver (see also /etc/graphlcd.conf)
 LCD_DRIVER="st7565r-reel"
+
+## LCD device
 LCD_DEVICE="/dev/ttyS0"
+
+## location of images for LCD
 GRAPHLCDIMAGEDIR="/opt/reel/share/images"
-GRAPHLCDIMAGEPREFIX="image-128x64-reelboxng-"
+
+## LCD image prefix ("brand")
+#GRAPHLCDIMAGEPREFIX="image-128x64-reelboxng-"
+GRAPHLCDIMAGEPREFIX="image-128x64-bm2lts-"
+GRAPHLCDIMAGEPREFIX="image-128x64-easyvdr-"
+
+## Netceiver plugin device
 MCLI_DEVICE="enp4s0"
+
+## Default file where next wakeup is stored
 WAKEUP_FILE_DEFAULT="/run/vdr/next-timer-reel"
+
+## Recordings directory
 RECORDINGSDIR="/var/lib/vdr/video/"
+
+## Audio device
 AUDIO_DEVICE="plughw:0,3"
+
+## Video resolution
 VIDEO_RESOLUTION="1920x1080"
 #VIDEO_RESOLUTION="3840x2160"
