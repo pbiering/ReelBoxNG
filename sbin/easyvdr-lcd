@@ -129,7 +129,7 @@ progressFrontpanel() {
 
 	[ -z "$action" ] && return
 
-	local image="$GRAPHLCDIMAGEDIR/${GRAPHLCDIMAGEPREFIX}${action}.pnm"
+	local image="$GRAPHLCDIMAGEDIR/${GRAPHLCDIMAGEPREFIX}${action}.pbm"
 	if [ ! -e "$image" ]; then
 		log "ERROR" "progressFrontpanel/image is not existing: $image"
 		return 1

@@ -39,13 +39,13 @@ for brand in $file_brand_list; do
 
 		for action in $file_action_ongoing_list; do
 			file_action="${file_prefix_action}-${action}.png"
-			file_output="${file_prefix_brand}-${brand}-${action}-progress-${i}.pnm"
+			file_output="${file_prefix_brand}-${brand}-${action}-progress-${i}.pbm"
 			if [ ! -f "$file_action" ]; then
 				echo "ERROR : missing file: file_action=$file_action"
 				exit 1
 			fi
-			pngtopnm "$file_action" >"$file_action.pnm" || exit 1
-			pnmcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" | pnmcomp -xoff=0 -yoff=54 "$file_progress.pnm" - >"$file_output" || exit 1
+			pngtopam "$file_action" >"$file_action.pnm" || exit 1
+			pamcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" | pnmcomp -xoff=0 -yoff=54 "$file_progress.pnm" - >"$file_output" || exit 1
 			rm "$file_action.pnm"
 		done
 		rm "$file_progress.pnm"
@@ -54,15 +54,15 @@ for brand in $file_brand_list; do
 	echo "INFO  : generate final action images for brand: $brand"
 	for action in $file_action_final_list; do
 		file_action="${file_prefix_action}-${action}.png"
-		file_output="${file_prefix_brand}-${brand}-${action}.pnm"
+		file_output="${file_prefix_brand}-${brand}-${action}.pbm"
 		if [ ! -f "$file_action" ]; then
 			echo "ERROR : missing file: file_action=$file_action"
 			exit 1
 		fi
 
-		pngtopnm "$file_action" >"$file_action.pnm" || exit 1
+		pngtopam "$file_action" >"$file_action.pnm" || exit 1
 		echo "DEBUG : create final output file: $file_output"
-		pnmcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" >"$file_output" || exit 1
+		pamcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" >"$file_output" || exit 1
 		rm "$file_action.pnm" || exit 1
 	done
 
