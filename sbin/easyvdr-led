@@ -132,12 +132,12 @@ setLED() {
 				;;
 			    started)
 				/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
-				/opt/reel/sbin/reelbox-control.sh set_led_button on
 				/opt/reel/sbin/reelbox-control.sh set_led_status power on
+				/opt/reel/sbin/reelbox-control.sh set_led_button on
 				;;
 			    stopping)
 				/opt/reel/sbin/reelbox-control.sh set_led_status standby blink
-				/opt/reel/sbin/reelbox-control.sh set_led_button red
+				/opt/reel/sbin/reelbox-control.sh set_led_button red max
 				;;
 			    stop)
 				/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
