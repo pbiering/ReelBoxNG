@@ -24,8 +24,9 @@ User8     @osdteletext
 #remote-rbfp0.User6      00000001000100D6       KEY_QUESTION    "Search"
 #remote-rbfp0.User7      0000000100010175       KEY_MODE        "PiP"
 #remote-rbfp0.User8      0000000100010184       KEY_TEXT        "Teletext"
-#remote-rbfp0.User9      000000010001016C       KEY_FAVORITES   "Herz"
+#remote-rbfp0.User9      000000010001016C       KEY_FAVORITES   "Heart"
 #
+## "long press"
 #                       00000001000100E3        KEY_SWITCHVIDEOMODE "aspect"
 #                       0000000100010093        KEY_XFER        "fav. +"
 #                       00000001000100A1        KEY_EJECTCD     "(eject)"
