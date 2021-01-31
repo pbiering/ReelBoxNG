@@ -14,6 +14,7 @@
 # 20201123/pbev: add support for logging of provided counter
 # 20201224/pbev: do not use 'remote' for 'cutting'
 # 20210118/pbev: replace 'cutting' by 'busy'
+# 20210131/pbev: specify max brightness for buttons during progress
 
 progname="$(basename "$0")"
 
@@ -131,7 +132,7 @@ setLED() {
 				;;
 			    started)
 				/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
-				/opt/reel/sbin/reelbox-control.sh set_led_button off
+				/opt/reel/sbin/reelbox-control.sh set_led_button on
 				/opt/reel/sbin/reelbox-control.sh set_led_status power on
 				;;
 			    stopping)
@@ -159,33 +160,33 @@ setLED() {
 				case $progress in
 				    0)
 					/opt/reel/sbin/reelbox-control.sh set_led_status standby blink
-					/opt/reel/sbin/reelbox-control.sh set_led_button red
+					/opt/reel/sbin/reelbox-control.sh set_led_button red max
 					;;
 				    1)
-					/opt/reel/sbin/reelbox-control.sh set_led_button pink
+					/opt/reel/sbin/reelbox-control.sh set_led_button pink max
 					;;
 				    2)
-					/opt/reel/sbin/reelbox-control.sh set_led_button blue
+					/opt/reel/sbin/reelbox-control.sh set_led_button blue max
 					;;
 				    3)
 					/opt/reel/sbin/reelbox-control.sh set_led_status remote blink
-					/opt/reel/sbin/reelbox-control.sh set_led_button red
+					/opt/reel/sbin/reelbox-control.sh set_led_button red max
 					;;
 				    4)
-					/opt/reel/sbin/reelbox-control.sh set_led_button pink
+					/opt/reel/sbin/reelbox-control.sh set_led_button pink max
 					;;
 				    5)
-					/opt/reel/sbin/reelbox-control.sh set_led_button blue
+					/opt/reel/sbin/reelbox-control.sh set_led_button blue max
 					;;
 				    6)
 					/opt/reel/sbin/reelbox-control.sh set_led_status record blink
-					/opt/reel/sbin/reelbox-control.sh set_led_button red
+					/opt/reel/sbin/reelbox-control.sh set_led_button red max
 					;;
 				    7)
-					/opt/reel/sbin/reelbox-control.sh set_led_button pink
+					/opt/reel/sbin/reelbox-control.sh set_led_button pink max
 					;;
 				    8)
-					/opt/reel/sbin/reelbox-control.sh set_led_button blue
+					/opt/reel/sbin/reelbox-control.sh set_led_button blue max
 					;;
 				    *)
 					log "ERROR" "unsupported progress value: $progress"
