@@ -41,7 +41,8 @@ Contains script / config files, can be either stored directly in related OS dire
 
 ### etc/vdr
 
-- remote.conf: remote control unit configuration file incl. ReelBox support
+- remote.conf.reelbox: remote control unit configuration file extension for ReelBox support
+- keymacros.conf.reelbox: keymacro configuration file example for ReelBox Remote Control Unit
 
 ### etc/sysconfig
 

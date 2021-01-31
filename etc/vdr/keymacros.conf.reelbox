@@ -1,0 +1,35 @@
+# Remote control key macros for VDR
+#
+# Format:
+#
+# macrokey  key1 key2 key3...
+# macrokey  @plugin key1 key2 key3...
+#
+# See man vdr(5)
+
+# Reel Remote Control
+Red       Recordings
+Green     @epgsearch
+Yellow    Channels
+
+# Teletext
+User8     @osdteletext
+
+## special ReelBox non-VDR standard key mapping
+
+#remote-rbfp0.User2      00000001000100E2       KEY_MEDIA       "multimedia"
+#remote-rbfp0.User3      0000000100010096       KEY_WWW         "internet"
+#remote-rbfp0.User4      0000000100010181       KEY_RADIO       "radio"
+#remote-rbfp0.User5      0000000100010168       KEY_VENDOR      "tv/real"
+#remote-rbfp0.User6      00000001000100D6       KEY_QUESTION    "Search"
+#remote-rbfp0.User7      0000000100010175       KEY_MODE        "PiP"
+#remote-rbfp0.User8      0000000100010184       KEY_TEXT        "Teletext"
+#remote-rbfp0.User9      000000010001016C       KEY_FAVORITES   "Herz"
+#
+#                       00000001000100E3        KEY_SWITCHVIDEOMODE "aspect"
+#                       0000000100010093        KEY_XFER        "fav. +"
+#                       00000001000100A1        KEY_EJECTCD     "(eject)"
+#
+# TODO
+#remote-rbfp0.2digit     000000010001019D
+#remote-rbfp0.Searchtimers 00000001000100D9
