@@ -34,3 +34,16 @@ User8     @osdteletext
 # TODO
 #remote-rbfp0.2digit     000000010001019D
 #remote-rbfp0.Searchtimers 00000001000100D9
+#
+# Frontpanel buttons from left 
+# 	KEY_OK
+#	KEY_UP
+#	KEY_DOWN
+#	KEY_EXIT
+#	KEY_EJECTCD
+#	KEY_DVD
+#	KEY_PAUSE
+#	KEY_STOP
+#	KEY_REWIND
+#	KEY_FORWARD
+#	KEY_RECORD
