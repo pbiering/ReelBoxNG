@@ -2,7 +2,7 @@
 #
 # (P) & (C) 2017-2020 by Peter Bieringer <pb@bieringer.de>
 #
-# requires netpbm-progs
+# requires netpbm-progs, ImageMagick
 
 action="$1"
 logo="$2"
@@ -30,6 +30,7 @@ for brand in $file_brand_list; do
 
 	echo "INFO  : generate progress images for brand: $brand"
 	for i in $(seq 0 8); do
+		echo "INFO  : generate progress #$i images for brand: $brand"
 		file_progress="${file_prefix_progress}-$i.png"
 		if [ ! -f "$file_progress" ]; then
 			echo "ERROR : missing file: file_progress=$file_progress"
@@ -45,7 +46,7 @@ for brand in $file_brand_list; do
 				exit 1
 			fi
 			pngtopam "$file_action" >"$file_action.pnm" || exit 1
-			pamcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" | pnmcomp -xoff=0 -yoff=54 "$file_progress.pnm" - >"$file_output" || exit 1
+			pnmcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" | pnmcomp -xoff=0 -yoff=54 "$file_progress.pnm" - | convert - "$file_output" || exit 1
 			rm "$file_action.pnm"
 		done
 		rm "$file_progress.pnm"
@@ -60,9 +61,9 @@ for brand in $file_brand_list; do
 			exit 1
 		fi
 
-		pngtopam "$file_action" >"$file_action.pnm" || exit 1
+		pngtopnm "$file_action" >"$file_action.pnm" || exit 1
 		echo "DEBUG : create final output file: $file_output"
-		pamcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" >"$file_output" || exit 1
+		pnmcomp -xoff=0 -yoff=38 "$file_action.pnm" "$file_logo.pnm" | convert - "$file_output" || exit 1
 		rm "$file_action.pnm" || exit 1
 	done
 
