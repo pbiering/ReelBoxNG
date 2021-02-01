@@ -9,6 +9,11 @@ LCD_DRIVER="st7565r-reel"
 ## LCD device
 LCD_DEVICE="/dev/ttyS0"
 
+## Button control
+BCONTROL="1" # Brightness of button LEDs
+BSTATUS="8" # Brightness of status LEDs
+BCOLOR="blue" # Color of button LEDs (blue/pink/red/off)
+
 ## location of images for LCD
 GRAPHLCDIMAGEDIR="/opt/reel/share/images"
 
