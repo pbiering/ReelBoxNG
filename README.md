@@ -54,6 +54,7 @@ Contains script / config files, can be either stored directly in related OS dire
 
 - etc/sysconfig/vdr-plugins.d/graphlcd.conf: example for graphlcd plugin configuration
 - etc/sysconfig/vdr-plugins.d/mcli.conf: example for mcli plugin configuration
+- etc/sysconfig/vdr-plugins.d/remote.conf: example for remote plugin configuration
 
 ### etc/X11
 

@@ -15,6 +15,8 @@
 # 20200715/pbev: cosmetics
 # 20200726/pbev: suppress stderr of ping6 (Warning: source address might be selected on device other than:...)
 # 20210128/pbev: optional read of confing /etc/sysconfig/reel
+# 20210131/pbev: honor global BCONTROL and add option for brightness to set_led_button, use BCOLOR for "on"
+# 20210201/pbev: keep (defined) button LED brightness on status LED change
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -344,12 +346,40 @@ SetLEDStatus() {
 		;;
 	esac
 
+	# include button color if set
+	if [ -n "$BCOLOR" -a -n "$BCONTROL" ]; then
+		case $BCOLOR in
+		    red)
+			BBLUE=0
+			BRED=$BCONTROL
+			BGREEN=0
+			;;
+		    blue)
+			BRED=0
+			BBLUE=$BCONTROL
+			BGREEN=0
+			;;
+		    pink)
+			BRED=$BCONTROL
+			BBLUE=$BCONTROL
+			BGREEN=0
+			;;
+		    *)
+			BRED=0
+			BBLUE=0
+			BGREEN=0
+			;;
+		esac
+	fi
+
+	VAL=$[ $brightness+256*($BRED+256*($BBLUE+256*$BGREEN)) ]
+
 	case $action in
 	    blink)
-		action_arg="-setledbrightness $brightness -blinkled"
+		action_arg="-setledbrightness $VAL -blinkled"
 		;;
 	    on)
-		action_arg="-setledbrightness $brightness -setled"
+		action_arg="-setledbrightness $VAL -setled"
 		;;
 	    off)
 		action_arg="-clearled"
@@ -370,10 +400,19 @@ SetLEDButton() {
 	[ ! -e /dev/frontpanel ] && return
 
 	local color="$1"
+	local brightness="$2"
 
-	BCONTROL=16
-	BSTATUS=16
+	BCONTROL=${BCONTROL:-15}	# default
+	if [ "$brightness" = "max" ]; then
+	       BCONTROL="15"
+	elif [ -n "$brightness" ]; then
+	       BCONTROL="$brightness"
+	fi
+	BSTATUS=${BSTATUS:-8}	# default
 	BGREEN=0 # not supported
+
+	BCOLOR="${BCOLOR:-blue}" # default
+	[ "$color" = "on" ] && color="$BCOLOR"
 
 	case $color in
 	    red)
@@ -716,7 +755,7 @@ Supported arg1
 		display image file on frontpanel
 	set_led_status {standby|remote|power|record|ALL} {on|off|blink} [<brightness 1-15>]
 		enable/disable/blink LED
-	set_led_button <color>
+	set_led_button <color>|off|on [<brightness 1-15>|max]
 		set color of button LEDs
 END
 	;;
