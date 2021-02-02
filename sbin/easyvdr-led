@@ -10,6 +10,10 @@
 #
 # features
 #  - progress start/stop: displaying various colors for buttons and status
+#  - booted:
+#	- normal		standby=off	remote=(remote)	recording=off	power=off
+#	- busy(editing/moving)	standby=blink	remote=(remote)	recording=off	power=off
+#	- recording		standby=off	remote=(remote)	recording=on	power=off
 #  - reboot:
 #	- 			standby=blink	remote=blink	recording=blink	power=off
 #  - power-off:
