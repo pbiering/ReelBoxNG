@@ -8,6 +8,15 @@
 # supporting
 #  - ReelBox
 #
+# features
+#  - progress start/stop: displaying various colors for buttons and status
+#  - reboot:
+#	- 			standby=blink	remote=blink	recording=blink	power=off
+#  - power-off:
+#	- no wakeup timer:	standby=off	remote=off	recording=off	power=on
+#	- max-wakeup timer:	standby=on	remote=on	recording=off	power=on
+#	- scheduled timer:	standby=on	remote=off	recording=off	power=on
+#
 # 20200325/pbev: new
 # 20200328/pbev: review
 # 20201119/pbev: add support for ReelBoxNG
