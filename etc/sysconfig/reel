@@ -1,5 +1,7 @@
 ### ReelBoxNG
 
+### Frontpanel
+
 ## LCD active at all
 LCD="yes"
 
@@ -22,18 +24,42 @@ GRAPHLCDIMAGEDIR="/opt/reel/share/images"
 GRAPHLCDIMAGEPREFIX="image-128x64-bm2lts-"
 GRAPHLCDIMAGEPREFIX="image-128x64-easyvdr-"
 
-## Netceiver plugin device
-MCLI_DEVICE="enp4s0"
+
+### Wakeup
 
 ## Default file where next wakeup is stored
 WAKEUP_FILE_DEFAULT="/run/vdr/next-timer-reel"
 
-## Recordings directory
+
+### Netceiver
+
+## Netceiver plugin device
+MCLI_DEVICE="enp4s0"
+
+
+### Directories
+
+## Recordings directory (VDR)
 RECORDINGSDIR="/var/lib/vdr/video/"
 
-## Audio device
-AUDIO_DEVICE="plughw:0,3"
+## Video directory (e.g. MPV)
+VIDEODIR="/var/lib/vdr/movies"
 
-## Video resolution
+
+### Video device
+
+## acceleration config for softhddevice
+VIDEO_ACCEL="va-api"
+
+## video resolution
 VIDEO_RESOLUTION="1920x1080"
 #VIDEO_RESOLUTION="3840x2160"
+
+
+### Audio device
+
+## number of HDMI socket 
+HDMI_PLUG=0
+
+# ALSA device string (aplay -L)
+AUDIO_DEVICE="hdmi:CARD=PCH,DEV=$HDMI_PLUG"
