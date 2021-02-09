@@ -1,0 +1,33 @@
+hdtsplay is a very simple demo for simple video playback on the HDE. No trick
+modes, etc. are supported.
+
+Usage:
+
+First parameter: Video file (MPEG2 or h.264) in TS format
+Second parameter: Video PID in hex
+Second parameter:  Audio PID in hex
+
+Audio and Videoformat are auto detected.
+
+Example for viewing a recorded TS:
+
+hdtsplay festhd_641_642.ts 641 642
+
+If the end of file is encountered it is wind back. Picture distortions can
+happen during the wrap around.
+
+Example for life viewing:
+
+(on one shell)
+szap ZDF -r         (the -r is important!)
+(prints VPID 6e and APID 78)
+
+(on another shell)
+hdtsplay /dev/dvb/adapter0/dvr0 6e 78
+
+Notes:
+
+- If /dev/hdshm is not accessible by other users, hdtsplay needs to run as
+root.
+
+-  For setting the output video mode and scaling on the host, use hdctrld.
