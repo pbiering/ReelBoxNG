@@ -81,7 +81,11 @@ int hdshm_init_struct_hd(void)
 	
 	hdd.start_phys=(void*)MAP_START;
 	hdd.start=ioremap(MAP_START, MAP_SIZE);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0))
 	hdd.start_nc=ioremap_nocache(MAP_START, MAP_SIZE);
+#else
+	hdd.start_nc=ioremap(MAP_START, MAP_SIZE);
+#endif
 
 	printk("start %p nc %p\n",hdd.start,hdd.start_nc);
 
@@ -134,11 +138,19 @@ int hdshm_init_struct_host(void)
 	hdd.bar1=(void*)pci_resource_start(hd_pci,1);
         hdd.start_phys= hdd.bar1+0x02000000+MAP_START;
 /*      hdd.start=ioremap((long)hdd.start_phys,MAP_SIZE);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0))
         hdd.start_nc=ioremap_nocache((long)hdd.start_phys,MAP_SIZE);
+#else
+        hdd.start_nc=ioremap((long)hdd.start_phys,MAP_SIZE);
+#endif
 	hdd.event_count=0; */
         u64 addr64=(u64) hdd.start_phys & 0xFFFFFFFF;
         hdd.start=ioremap(addr64,MAP_SIZE);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0))
         hdd.start_nc=ioremap_nocache(addr64,MAP_SIZE);
+#else
+        hdd.start_nc=ioremap(addr64,MAP_SIZE);
+#endif
         hdd.event_count=0;
 
         if (!hdd.start)
