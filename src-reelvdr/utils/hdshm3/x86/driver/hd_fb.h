@@ -16,7 +16,7 @@
 #include <linux/fb.h>
 #include <linux/moduleparam.h>
 
-#include "../../src/include/hdshm_user_structs.h"
+#include "hdshm_user_structs.h"
 
 static int has_fb = 0;
 module_param(has_fb, int, 0);
