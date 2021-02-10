@@ -4,9 +4,9 @@
 */
 #define FB_DEVICE_NAME "hde_fb"
 
-//#define fb_dbg(format, arg...) printk(FB_DEVICE_NAME": "format"\n", ## arg)
-#define fb_dbg(format, arg...)
-#define fb_err(format, arg...) printk(FB_DEVICE_NAME": "format"\n", ## arg)
+//#define hd_fb_dbg(format, arg...) printk(FB_DEVICE_NAME": "format"\n", ## arg)
+#define hd_fb_dbg(format, arg...)
+#define hd_fb_err(format, arg...) printk(FB_DEVICE_NAME": "format"\n", ## arg)
 
 #define MAX_PALETTE_NUM_ENTRIES         256
 #define GO_BASE    0x2000000 
@@ -36,7 +36,7 @@ static unsigned int pseudo_palette[MAX_PALETTE_NUM_ENTRIES];
 	Tool functions
 */
 int init_fb_info(void) {
-	fb_dbg("init_fb_info");
+	hd_fb_dbg("init_fb_info");
 	memset(&hdefb, 0, sizeof(struct hde_fb));
 	hdefb.oldw = 720;
 	hdefb.oldh = 576;
@@ -104,21 +104,21 @@ int get_hd_data (struct fb_info *info) {
 	struct hde_fb* fb = (struct hde_fb*)info;
 	if(!info)
 	    return -EINVAL;  
-	fb_dbg("get_hd_data %p", fb->hd_data);
+	hd_fb_dbg("get_hd_data %p", fb->hd_data);
 	if (fb->hd_data) 
 	    return 0;
 	if (hdshm_lock_table()) {
-	    fb_err("dev_open: lock_tables timed out");
+	    hd_fb_err("dev_open: lock_tables timed out");
 	    return -ETIMEDOUT;
 	} // if
 	bse=hdshm_find_area(HDID_HDA, NULL);
 	if (!bse) {
-	    fb_err("dev_open: area not found");
+	    hd_fb_err("dev_open: area not found");
 	    hdshm_unlock_table();
 	    return -ENOENT;
 	} // if
 	fb->hd_data = (hd_data_t *)ioremap((unsigned long)hdd.bar1+GO_BASE+bse->phys, bse->length); /* Virtual address */
-	fb_dbg("dev_open %dx%d 0x%x 0x%x", fb->hd_data->video_mode.width, fb->hd_data->video_mode.height, fb->hd_data->aspect.scale, bse->phys);
+	hd_fb_dbg("dev_open %dx%d 0x%x 0x%x", fb->hd_data->video_mode.width, fb->hd_data->video_mode.height, fb->hd_data->aspect.scale, bse->phys);
 	hdshm_unlock_table();
 	return 0;
 } // get_hd_data
@@ -128,7 +128,7 @@ int update_fbinfo(struct fb_var_screeninfo *var, int w, int h, int xm)
 {		
 	int bytesperpixel=(xm&0xf0)>>4;
 	
-	fb_dbg("update_fbinfo %i %i %x\n", w,h,xm);
+	hd_fb_dbg("update_fbinfo %i %i %x\n", w,h,xm);
 	
 	var->xres = w;
 	var->yres = h;
@@ -174,7 +174,7 @@ int set_pic_mode(struct fb_info *info, int w, int h, int xm) {
 	if(!info)
 	    return -EINVAL;  
 
-	fb_dbg("set_pic_mode %ix%i, %x", w, h, xm);
+	hd_fb_dbg("set_pic_mode %ix%i, %x", w, h, xm);
 
 	if (!fb->hd_data) 
 	    return -EINVAL;
@@ -194,7 +194,7 @@ int set_pic_mode(struct fb_info *info, int w, int h, int xm) {
 	fb->hd_data->plane[2].vh=h;
 
 	if (w==720 && h==576) { // Default OSD
-		fb_dbg("Default OSD");
+		hd_fb_dbg("Default OSD");
 		fb->hd_data->osd_dont_touch=0;
 		fb->hd_data->plane[2].alpha=255;
 		fb->hd_data->plane[2].mode=0x41;
@@ -224,7 +224,7 @@ int set_pic_mode(struct fb_info *info, int w, int h, int xm) {
 */
 int dev_open (struct fb_info *info, int user) {
 	struct hde_fb* fb = (struct hde_fb*)info;  
-	fb_dbg("---------- dev_open %d", user);
+	hd_fb_dbg("---------- dev_open %d", user);
 	if (user) {
 		int ret = get_hd_data(info);
 		if(ret)
@@ -237,7 +237,7 @@ int dev_open (struct fb_info *info, int user) {
 //---------------------------------------------------------------------------
 
 int dev_release (struct fb_info *info, int user) {
-	fb_dbg("---------- dev_release %d", user);
+	hd_fb_dbg("---------- dev_release %d", user);
 	if (user) {
 		struct hde_fb* fb = (struct hde_fb*)info;  
 		if (fb->user_count > 0) {
@@ -255,7 +255,7 @@ int dev_release (struct fb_info *info, int user) {
 int dev_check_var(struct fb_var_screeninfo *var, struct fb_info *info) {
 	int w=0,h=0,xm=0;
 
-	fb_dbg("dev_check_var");
+	hd_fb_dbg("dev_check_var");
 	if(!var)
 		return -EINVAL;
 
@@ -271,7 +271,7 @@ int dev_check_var(struct fb_var_screeninfo *var, struct fb_info *info) {
 
 	update_fbinfo(var, w,h,xm);
 
-	fb_dbg("check_var w %d h %d vw %d vh %d xo %d yo %d bps %d ww %d hh %d", 
+	hd_fb_dbg("check_var w %d h %d vw %d vh %d xo %d yo %d bps %d ww %d hh %d", 
 	       var->xres, var->yres, var->xres_virtual, var->yres_virtual,
 	       var->xoffset, var->yoffset, var->bits_per_pixel, var->height, var->width);
 	return 0;
@@ -285,11 +285,11 @@ int dev_set_par (struct fb_info *info) {
 
 	w=0;h=0;xm=0;
 
-	fb_dbg("dev_set_par");
+	hd_fb_dbg("dev_set_par");
 	if(!var)
 		return EINVAL;
 
-	fb_dbg("set_var w %d h %d vw %d vh %d xo %d yo %d bps %d ww %d hh %d", 
+	hd_fb_dbg("set_var w %d h %d vw %d vh %d xo %d yo %d bps %d ww %d hh %d", 
 	       var->xres, var->yres, var->xres_virtual, var->yres_virtual, 
 	       var->xoffset, var->yoffset, var->bits_per_pixel, var->height, var->width);
 
@@ -309,18 +309,18 @@ int dev_set_par (struct fb_info *info) {
 //---------------------------------------------------------------------------
 
 int dev_setcolreg (unsigned regno, unsigned red, unsigned green, unsigned blue, unsigned transp, struct fb_info *info) {
-	fb_dbg("dev_setcolreg");
+	hd_fb_dbg("dev_setcolreg");
 	return 0;
 } // dev_setcolreg
 
 int dev_setcmap (struct fb_cmap *cmap, struct fb_info *info) {
-//	fb_dbg("dev_setcmap");
+//	hd_fb_dbg("dev_setcmap");
 	return 0;
 } // dev_setcmap
 
 int dev_blank (int blank, struct fb_info *info) {
 #if 0
-	fb_dbg("dev_blank %i",blank);
+	hd_fb_dbg("dev_blank %i",blank);
 	if (blank) {
 		hdefb.blank_w=hdefb.oldw;
 		hdefb.blank_h=hdefb.oldh;
@@ -335,85 +335,85 @@ int dev_blank (int blank, struct fb_info *info) {
 } // dev_blank
 
 int dev_pan_display (struct fb_var_screeninfo *var, struct fb_info *info) {
-//	fb_dbg("dev_pan_display");
-//	fb_dbg("pan  w %d h %d vw %d vh xo %d yo %d bps %d %d ww %d hh %d", 
+//	hd_fb_dbg("dev_pan_display");
+//	hd_fb_dbg("pan  w %d h %d vw %d vh xo %d yo %d bps %d %d ww %d hh %d", 
 //	       var->xres, var->yres, var->xres_virtual, var->yres_virtual, var->xoffset, var->yoffset, var->bits_per_pixel, var->height, var->width);
 	return 0;
 } // dev_pan_display
  
 void dev_fillrect (struct fb_info *info, const struct fb_fillrect *rect) {
-	fb_dbg("dev_fillrect");
+	hd_fb_dbg("dev_fillrect");
 	return cfb_fillrect(info, rect);
 } // dev_fillrect
 
 void dev_copyarea (struct fb_info *info, const struct fb_copyarea *region) {
-	fb_dbg("dev_copyarea");
+	hd_fb_dbg("dev_copyarea");
 	return cfb_copyarea(info, region);
 } // dev_copyarea
 
 void dev_imageblit (struct fb_info *info, const struct fb_image *image) {
-	//fb_dbg("dev_imageblit");
+	//hd_fb_dbg("dev_imageblit");
 	return cfb_imageblit(info, image);
 } // dev_imageblit
 
 int dev_cursor (struct fb_info *info, struct fb_cursor *cursor) {
-	fb_dbg("dev_cursor");
+	hd_fb_dbg("dev_cursor");
 	return 0;
 } // dev_cursor
 
 void dev_rotate(struct fb_info *info, int angle) {
-	fb_dbg("dev_rotate");
+	hd_fb_dbg("dev_rotate");
 } // dev_rotate
 
 int dev_sync(struct fb_info *info) {
-	fb_dbg("dev_sync");
+	hd_fb_dbg("dev_sync");
 	return 0;
 } // dev_sync
 
 int dev_ioctl (struct fb_info *info, unsigned int cmd, unsigned long arg) {
 	int ret=0;
-	fb_dbg("dev_ioctl %x", cmd);
+	hd_fb_dbg("dev_ioctl %x", cmd);
 	return ret;
 } // dev_ioctl
 
 int dev_compat_ioctl (struct fb_info *info, unsigned cmd, unsigned long arg) {
-	fb_dbg("dev_compat_ioctl %x", cmd);
+	hd_fb_dbg("dev_compat_ioctl %x", cmd);
 	return 0;
 } // dev_compat_ioctl
 
 int dev_mmap(struct fb_info *info, struct vm_area_struct *vma) {
 	size_t size;
-	fb_dbg("dev_mmap");
+	hd_fb_dbg("dev_mmap");
 	if (!vma || !info) {
-		fb_err("mmap: invalid args %p %p", info, vma);
+		hd_fb_err("mmap: invalid args %p %p", info, vma);
 		return -EINVAL;
 	} // if
 	if (!(vma->vm_flags & VM_SHARED)) {
-		fb_err("mmap: only support VM_SHARED mapping");
+		hd_fb_err("mmap: only support VM_SHARED mapping");
 		return -EINVAL; 
 	} // if
  	if (vma->vm_pgoff != 0) {
-		fb_err("mmap: only support offset=0 (%ld)", vma->vm_pgoff);
+		hd_fb_err("mmap: only support offset=0 (%ld)", vma->vm_pgoff);
 		return -EINVAL; 
 	} // if
 	size = vma->vm_end - vma->vm_start;
 	if (size > info->fix.smem_len) {
-		fb_err("mmap: requested size to big 0x%x (0x%x)", size, info->fix.smem_len);
+		hd_fb_err("mmap: requested size to big 0x%x (0x%x)", size, info->fix.smem_len);
 		return -EINVAL; 
 	} // if
-	fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %d (0x%x)", vma->vm_start, info->fix.smem_start, size, size);
+	hd_fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %d (0x%x)", vma->vm_start, info->fix.smem_start, size, size);
 	if(remap_pfn_range(vma, vma->vm_start, info->fix.smem_start >> PAGE_SHIFT, size, vma->vm_page_prot)) //pgprot_noncached(vma->vm_page_prot)))
 		return -EAGAIN;
-	fb_dbg("dev_mmap SUCCESS");
+	hd_fb_dbg("dev_mmap SUCCESS");
 	return 0;
 } // dev_mmap
 
 void dev_save_state (struct fb_info *info) {
-	fb_dbg("dev_save_state");
+	hd_fb_dbg("dev_save_state");
 } // dev_save_state
 
 void dev_restore_state (struct fb_info *info) {
-	fb_dbg("dev_restore_state");
+	hd_fb_dbg("dev_restore_state");
 } // dev_restore_state 
 
 /*****************************************************************************/
@@ -446,12 +446,12 @@ static struct fb_ops hde_fb_fops = {
 
 int hdfb_init(void) {
 	int ret;
-	fb_dbg("init %d", has_fb);
+	hd_fb_dbg("init %d", has_fb);
 	if (!has_fb)
 		return 0;
 	ret = init_fb_info();
 	if(ret < 0) {
-		fb_err("Unable to init fb_info: %d", ret);
+		hd_fb_err("Unable to init fb_info: %d", ret);
         return ret;
 	} // if
 	hdefb.fb_info.fbops = &hde_fb_fops;
@@ -459,13 +459,13 @@ int hdfb_init(void) {
 	
 	ret = register_framebuffer(&hdefb.fb_info);
 	if(ret < 0) {
-		fb_err("Unable to register framebuffer: %d", ret);
+		hd_fb_err("Unable to register framebuffer: %d", ret);
         return -EINVAL;
 	} // if
 	return ret;
 } // hdfb_init
 
 void hdfb_exit(void) {
-	fb_dbg("exit");
+	hd_fb_dbg("exit");
 	unregister_framebuffer(&hdefb.fb_info);
 } // hdfb_exit
