@@ -99,7 +99,7 @@ unsigned char* pcimap(off_t offset)
         if (base==MAP_FAILED) {       
                 fprintf(stderr, " Failed to mmap PCI (%s)\n",
                        strerror(errno));
-		return 0;
+		return NULL;
         }
 	
 	fprintf(stderr, "%s: result mmap base=%p\n", __FUNCTION__, base);
@@ -382,6 +382,10 @@ int main(int argc, char ** argv)
 		bar1=find_decypher();
 
 	pci_base=pcimap(bar1);
+	if (pci_base == NULL) {
+		fprintf(stderr, "%s: pcimap returns pci_base=NULL\n", __FUNCTION__);
+		exit(1);
+	};
 	fprintf(stderr, "%s: map bar1=%x to pci_base=%p\n", __FUNCTION__, bar1, pci_base);
 
 	if (strlen(fname)) {
