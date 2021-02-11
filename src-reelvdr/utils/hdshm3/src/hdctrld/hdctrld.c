@@ -140,9 +140,11 @@ void hd_daemon(void)
 
 void struct_init(int clear)
 {
-	hdshm_area_t *hsa;
+#ifdef CONFIG_MIPS
         int area_size = ALIGN_UP(sizeof(hd_data_t), 2*4096);
+#endif
 
+	hdshm_area_t *hsa;
 	if (hd_init(0)) {
 		fprintf(stderr,"hdctrld: hdshm driver not loaded!\n");
 		exit(0);
