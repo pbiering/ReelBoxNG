@@ -173,7 +173,7 @@ int hdshm_init_struct_host(void)
 	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "enabled PCI device successfully 1905:8100\n")
 
 	// take ownership of pci related regions
-	pci_request_regions(hd_pci, "expdev");
+	pci_request_regions(hd_pci, "bar1");
 
 	// checking if PCI-device reachable by checking that BAR0 is defined and memory mapped
 	if( !(pci_resource_flags(hd_pci,1) & IORESOURCE_MEM) ) {
