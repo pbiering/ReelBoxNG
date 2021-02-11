@@ -4,9 +4,13 @@
 */
 #define FB_DEVICE_NAME "hde_fb"
 
-//#define hd_fb_dbg(format, arg...) printk(FB_DEVICE_NAME": "format"\n", ## arg)
-#define hd_fb_dbg(format, arg...)
-#define hd_fb_err(format, arg...) printk(FB_DEVICE_NAME": "format"\n", ## arg)
+//#define hd_fb_dbg(format, arg...) printk(FB_DEVICE_NAME ": "format"\n", ## arg)
+//#define hd_fb_dbg(format, arg...)
+#define hd_fb_err(format, arg...) printk(FB_DEVICE_NAME ": "format"\n", ## arg)
+
+#ifdef HD_DEBUG_BIT_MODULE_HDFB
+#define hd_fb_dbg(format, arg...) hd_dbg(HD_DEBUG_BIT_MODULE_HDFB, format, ## arg)
+#endif
 
 #define MAX_PALETTE_NUM_ENTRIES         256
 #define GO_BASE    0x2000000 
@@ -398,10 +402,18 @@ int dev_mmap(struct fb_info *info, struct vm_area_struct *vma) {
 	} // if
 	size = vma->vm_end - vma->vm_start;
 	if (size > info->fix.smem_len) {
+#ifndef __x86_64
 		hd_fb_err("mmap: requested size to big 0x%x (0x%x)", size, info->fix.smem_len);
+#else
+		hd_fb_err("mmap: requested size to big 0x%lx (0x%x)", size, info->fix.smem_len);
+#endif
 		return -EINVAL; 
 	} // if
+#ifndef __x86_64
 	hd_fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %d (0x%x)", vma->vm_start, info->fix.smem_start, size, size);
+#else
+	hd_fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %d (0x%lx)", vma->vm_start, info->fix.smem_start, size, size);
+#endif
 	if(remap_pfn_range(vma, vma->vm_start, info->fix.smem_start >> PAGE_SHIFT, size, vma->vm_page_prot)) //pgprot_noncached(vma->vm_page_prot)))
 		return -EAGAIN;
 	hd_fb_dbg("dev_mmap SUCCESS");
@@ -446,13 +458,13 @@ static struct fb_ops hde_fb_fops = {
 
 int hdfb_init(void) {
 	int ret;
-	hd_fb_dbg("init %d", has_fb);
+	hd_fb_dbg("init has_fb=%d", has_fb);
 	if (!has_fb)
 		return 0;
 	ret = init_fb_info();
 	if(ret < 0) {
 		hd_fb_err("Unable to init fb_info: %d", ret);
-        return ret;
+	        return ret;
 	} // if
 	hdefb.fb_info.fbops = &hde_fb_fops;
 	fb_alloc_cmap(&hdefb.fb_info.cmap, MAX_PALETTE_NUM_ENTRIES, 0);
@@ -460,12 +472,14 @@ int hdfb_init(void) {
 	ret = register_framebuffer(&hdefb.fb_info);
 	if(ret < 0) {
 		hd_fb_err("Unable to register framebuffer: %d", ret);
-        return -EINVAL;
+		return -EINVAL;
 	} // if
 	return ret;
 } // hdfb_init
 
 void hdfb_exit(void) {
-	hd_fb_dbg("exit");
+	hd_fb_dbg("exit has_fb=%d", has_fb);
+	if (!has_fb)
+		return;
 	unregister_framebuffer(&hdefb.fb_info);
 } // hdfb_exit
