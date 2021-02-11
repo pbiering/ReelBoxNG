@@ -2,9 +2,9 @@
 HDSHM    = ../../src/
 
 CC        ?= gcc
-CFLAGS    ?= -Wall -O3 -funroll-loops -m32
+CFLAGS    ?= -Wall -O3 -funroll-loops
 INCLUDES  = -I. -I${HDSHM}/include  -I${HDSHM}
-LDFLAGS   = -lpthread -m32
+LDFLAGS   = -lpthread
 #LDADD     =
 
 MODULES = hdtsplay.o hdshmlib.o hdchannel.o

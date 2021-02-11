@@ -18,12 +18,23 @@ void stream(int file, int vpid, int apid, int tmode)
 	void* buffer;
 	int n=0;
 	int buffer_size;
+	int ret;
 	hdshm_area_t *area;
 	hd_data_t volatile *hda;
-	char *xbuf;
+	//char *xbuf; // -Wunused-but-set-variable
 	hd_packet_trickmode_t trick;
 
-	hd_init(0);
+	ret = hd_init(0);
+	if (ret) {
+		printf("hd_init failed ret=%d\n", ret);
+		exit(-1);
+	};
+
+	ret = hd_status();
+	if (ret) {
+		printf("hd_status failed ret=%d\n", ret);
+		exit(-1);
+	};
 	
 	area=hd_get_area(HDID_HDA);
 	if (!area || !area->mapped) {
@@ -48,7 +59,7 @@ void stream(int file, int vpid, int apid, int tmode)
 
 	hda->player[0].data_generation++;
 	sum=0;
-	xbuf=malloc(len);
+	//xbuf=malloc(len); // -Wunused-but-set-variable
 
 	trick.header.magic = HD_PACKET_MAGIC;
 	trick.header.type=HD_PACKET_TRICKMODE;
