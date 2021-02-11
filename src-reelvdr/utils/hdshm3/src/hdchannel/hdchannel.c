@@ -220,7 +220,7 @@ void hd_channel_free_areas(hd_channel_t *handle)
 	areas=bcc->used_areas;
 	if (handle->creator)
 		bcc->state=0;
-	printf("hd_channel_free_areas: used areas %i\n",bcc->used_areas); // FIXME BUG!!!
+	printf("hd_channel_free_areas: used areas %i\n",areas);
 	hd_free_area(handle->control_area);
 	for(n=0;n<1;n++) 
 		hd_free_area(handle->data_area[n]);
