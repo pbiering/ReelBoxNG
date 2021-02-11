@@ -175,7 +175,7 @@ int hdshm_init_struct_host(void)
 	// take ownership of pci related regions
 	pci_request_regions(hd_pci, "bar1");
 
-	// checking if PCI-device reachable by checking that BAR0 is defined and memory mapped
+	// checking if PCI-device reachable by checking that BAR1 is defined and memory mapped
 	if( !(pci_resource_flags(hd_pci,1) & IORESOURCE_MEM) ) {
 		hd_err("incorrect BAR1 configuration of PCI device 1905:8100\n");
 		return(-ENODEV);
@@ -222,7 +222,7 @@ int hdshm_init_struct_host(void)
 		hd_err("hdd.hd_root->booted=%x (read from shared memory returned unexpected value != 0)\n", hdd.hd_root->booted);
 		return -1;
 	};
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hhdd.hd_root->booted=%x (successful read from shared memory)\n", hdd.hd_root->booted);
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdd.hd_root->booted=%x (successful read from shared memory)\n", hdd.hd_root->booted);
         return 0;  
 }
 /* --------------------------------------------------------------------- */
