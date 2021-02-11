@@ -300,17 +300,20 @@ int wait_kernel(int timeout)
 	if (fd<0)
 		return -1;
 
-
+	fprintf(stderr, "%s: kernel boot wait seconds: %d\n",__FUNCTION__, timeout);
 	for(n=0;n<timeout;n++) {
 		stat=ioctl(fd, IOCTL_HDSHM_GET_STATUS);
+		fprintf(stderr, "%s: IOCTL_HDSHM_GET_STATUS result stat=%d n=%d\n",__FUNCTION__, stat, n);
 		if (!(stat&HDSHM_STATUS_NOT_BOOTED)) {
+			fprintf(stderr, "%s: kernel booted\n",__FUNCTION__);
 			close(fd);
 			return 0;
 		}
-		printf("WAIT %i  \r",n);
-		fflush(stdout);
+		//fprintf("WAIT %d  \r",n);
+		//fflush(stdout);
 		sleep(1);
 	}
+	fprintf(stderr, "%s: kernel boot timeout reached: %d\n",__FUNCTION__, timeout);
 	close(fd);
 	return 1;
 }

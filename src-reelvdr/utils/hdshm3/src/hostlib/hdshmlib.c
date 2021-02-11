@@ -9,6 +9,7 @@
  */
 /*****************************************************************************/
 
+#include <linux/version.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -33,8 +34,10 @@
 #define SHMHDDEV "/dev/hdshm"
 
 static int hdfd =- 1;
-#define dbg1(format, arg...) do {} while (0)
-#define dbg(format, arg...) do {} while (0)     //printf(format, ## arg) //do {} while (0) //printk(format, ## arg)
+//#define dbg1(format, arg...) do {} while (0)
+//#define dbg(format, arg...) do {} while (0)     //printf(format, ## arg) //do {} while (0) //printk(format, ## arg)
+#define dbg1(format, arg...) fprintf(stderr, "%s:%d:%s: " format, __FILE__, __LINE__, __FUNCTION__, ##arg);
+#define dbg(format, arg...) fprintf(stderr, "%s:%d:%s: " format, __FILE__, __LINE__, __FUNCTION__, ##arg);
 
 //extern void hd_channel_cleanup(void);
 
@@ -48,10 +51,11 @@ hdshm_area_t *hd_get_area(int id)
 
     hdshm_area_t bah, *br = NULL;
 
-    dbg1("HOST: get_area ID %x\n", id);
+    dbg1("HOST: get_area id=%x hdfd=%d\n", id, hdfd);
     memset(&bah, 0, sizeof(bah));
     bah.id = id;
     ret = ioctl(hdfd, IOCTL_HDSHM_GET_AREA, &bah);
+    dbg1("HOST: ioctl ret=%d\n", ret);
 
     if (ret != 0)
         return NULL;
@@ -197,7 +201,11 @@ int hdshm_reset(void)
 //---------------------------------------------------------------------------
 int hd_status(void)
 {
-    return ioctl(hdfd, IOCTL_HDSHM_GET_STATUS);
+    int stat;
+    dbg("HOST: called with hdfd=%d\n", hdfd);
+    stat = ioctl(hdfd, IOCTL_HDSHM_GET_STATUS);
+    dbg("HOST: stat=%d\n", stat);
+    return stat;
 }
 
 //---------------------------------------------------------------------------
@@ -211,12 +219,14 @@ int hdshm_local_memory(void)
 
 int hd_init(int start)
 {
+    dbg("HOST: called\n");
     if (hdfd == -1)
     {
         hdfd = open(SHMHDDEV, O_RDWR);
         if (hdfd == -1)
             return -1;
     }
+    dbg("HOST: hd_init successful start=%d hdfd=%d\n", start, hdfd);
     return 0;
 }
 

@@ -276,19 +276,26 @@ int hdshm_get_area(struct hdshm_file *bsf, unsigned long arg)
 	hdshm_entry_t *bse;
 	int ret=0;
 
-	if (!hdd.hd_root->booted)
+	if (!hdd.hd_root->booted) {
+		hd_err("hdd.hdd_root->booted=%d (not booted))\n", hdd.hd_root->booted)
 	        return -ENODEV;
+	};
 	        
-	if (copy_from_user(&bsa,(void*)arg,sizeof(hdshm_area_t)))
+	if (copy_from_user(&bsa,(void*)arg,sizeof(hdshm_area_t))) {
+		hd_err("copy_from_user failed\n")
 		return -EFAULT;
+	};
 
 	dbg1("get_area %x",bsa.id);
 
-	if (hdshm_lock_table())
+	if (hdshm_lock_table()) {
+		hd_err("hdshm_lock_table timeout\n")
 		return -ETIMEDOUT;
+	};
 
 	bse=hdshm_find_area(bsa.id, NULL);
 	if (!bse) {
+		hd_err("hdshm_find_area not successful\n")
 		hdshm_unlock_table();
 		return -ENOENT;
 	}
@@ -302,8 +309,10 @@ int hdshm_get_area(struct hdshm_file *bsf, unsigned long arg)
 	bsa.usage=bse->usage;
 	bsa.kernel_mem=(char*)hdd.start +((long)bse->phys-(long)hdd.start_phys);
 	
-	if (copy_to_user((void*)arg,&bsa,sizeof(hdshm_area_t)))
+	if (copy_to_user((void*)arg,&bsa,sizeof(hdshm_area_t))) {
+		hd_err("copy_to_user failed\n")
 		ret=-EFAULT;
+	}
 	hdshm_unlock_table();
 	return ret;
 }
@@ -595,6 +604,8 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 #endif
 	struct hdshm_file *bsf=(struct hdshm_file*)file->private_data;
 
+	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with cmd=%x arg=%lx\n", cmd, arg)
+
 	switch(cmd) {
 	case IOCTL_HDSHM_GET_AREA:
 		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_AREA with arg=%lx\n", arg)
@@ -661,7 +672,7 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with unsupported cmd=%d arg=%d\n", cmd, arg)
 		break;
 	}
-	// hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "usage h %i b %i", hdd.hd_root->host_usage,hdd.hd_root->hd_usage)
+	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "hdd.hd_root->host_usage=%i hdd.hd_root->hd_usage=%i", hdd.hd_root->host_usage,hdd.hd_root->hd_usage)
 	return ret;
 }
 /* --------------------------------------------------------------------- */

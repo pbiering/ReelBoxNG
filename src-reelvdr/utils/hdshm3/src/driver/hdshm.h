@@ -16,7 +16,7 @@
 #endif
 
 // debug
-extern uint32_t hd_debug_mask;
+//extern uint32_t hd_debug_mask;
 #define HD_DEBUG_BIT_MODULE_TODO	0x01000000
 #define HD_DEBUG_BIT_MODULE_INIT	0x00010000
 #define HD_DEBUG_BIT_MODULE_EXIT	0x00020000
