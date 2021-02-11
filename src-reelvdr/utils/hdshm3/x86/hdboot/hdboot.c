@@ -270,11 +270,12 @@ int wait_for_pciboot(unsigned char *pci_base, int timeout_s)
 	int n;
 	for(n=0;n<1+timeout_s*10;n++) {
 		if ((n % 10) == 0)
-			fprintf(stderr, "%s: pci_base=%p %x\n",__FUNCTION__, pci_base, *(volatile int*)(pci_base+SEM_3_SCRATCH_REG));
+			fprintf(stderr, "%s: pci_base=%p pci_base+SEM_3_SCRATCH_REG=%x (waiting for 0xb001abcd)\n",__FUNCTION__, pci_base, *(volatile int*)(pci_base+SEM_3_SCRATCH_REG));
 		if (*(volatile int*)(pci_base+SEM_3_SCRATCH_REG)==0xb001abcd)
 			return 0;
 		usleep(100*1000);
 	}
+	fprintf(stderr, "%s: pci_base=%p pci_base+SEM_3_SCRATCH_REG=%x (found expected)\n",__FUNCTION__, pci_base, *(volatile int*)(pci_base+SEM_3_SCRATCH_REG));
 	return 1;
 }
 /*------------------------------------------------------------------------*/
