@@ -107,10 +107,12 @@ void hd_unmap_area(hdshm_area_t * handle)
     int ret;
     if (!handle || !handle->mapped)
         return;
-    dbg1("unmap  %p, length %x\n", handle->real_mapped, handle->real_length);
+    dbg1("%s: unmap  %p, length %x\n", __FUNCTION__, handle->real_mapped, handle->real_length);
     munmap(handle->real_mapped, handle->real_length);
-    dbg1("ioctl unmap\n");
+    dbg1("%s: ioctl unmap\n", __FUNCTION__);
     ret = ioctl(hdfd, IOCTL_HDSHM_UNMAP_AREA, handle->id);
+    if (ret == 0) { }; // TODO catch -Wunused-but-set-variable
+    dbg1("%s: ioctl result: %d\n", __FUNCTION__, ret);
     handle->mapped = NULL;
 }
 
@@ -134,6 +136,7 @@ int hd_check_area(hdshm_area_t * bah)
     hdshm_area_t bah1;
 
     ret = ioctl(hdfd, IOCTL_HDSHM_GET_AREA, &bah1);
+    if (ret == 0) { }; // TODO catch -Wunused-but-set-variable
 
     if (bah->physical != bah1.physical || bah->length != bah1.length)
     {
