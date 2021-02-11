@@ -45,6 +45,7 @@
 #define _HDSHM_IOCTLS
 #include "hdshm.h"
 
+uint32_t hd_dbg_mask = 0xffffffff;
 static hdshm_data_t hdd; // FIXME allow multiple devices
 
 #ifdef CONFIG_MIPS
@@ -52,7 +53,7 @@ static hdshm_data_t hdd; // FIXME allow multiple devices
 #include <asm/mach-go700x/go700x_pci.h>
 #define IS_HD
 #else
-#warning "Compiling for x86-host"
+// #warning "Compiling for x86-host"
 #define IS_HOST
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20))
 /*only for avg*/
@@ -61,13 +62,36 @@ static hdshm_data_t hdd; // FIXME allow multiple devices
 #endif
 
 
-#define dbg1(format, arg...) do {} while (0)
+//#define dbg1(format, arg...) do {} while (0)
 #define dbg(format, arg...)  printk(format"\n", ## arg)
 #define err(format, arg...) printk(format"\n", ## arg)
 
+#define STRIPPATH(s)\
+    (sizeof(s) > 2 && (s)[sizeof(s)-2] == '/' ? (s) + sizeof(s) - 1 : \
+    sizeof(s) > 3 && (s)[sizeof(s)-3] == '/' ? (s) + sizeof(s) - 2 : \
+    sizeof(s) > 4 && (s)[sizeof(s)-4] == '/' ? (s) + sizeof(s) - 3 : \
+    sizeof(s) > 5 && (s)[sizeof(s)-5] == '/' ? (s) + sizeof(s) - 4 : \
+    sizeof(s) > 6 && (s)[sizeof(s)-6] == '/' ? (s) + sizeof(s) - 5 : \
+    sizeof(s) > 7 && (s)[sizeof(s)-7] == '/' ? (s) + sizeof(s) - 6 : \
+    sizeof(s) > 8 && (s)[sizeof(s)-8] == '/' ? (s) + sizeof(s) - 7 : \
+    sizeof(s) > 9 && (s)[sizeof(s)-9] == '/' ? (s) + sizeof(s) - 8 : \
+    sizeof(s) > 10 && (s)[sizeof(s)-10] == '/' ? (s) + sizeof(s) - 9 : \
+    sizeof(s) > 11 && (s)[sizeof(s)-11] == '/' ? (s) + sizeof(s) - 10 : (s))
+
+#define hd_dbg(hd_dbg_bit, format, arg...) if (hd_dbg_bit & hd_dbg_mask) { printk("hdshm: DEBUG(%08x) %s:%d:%s: " format, hd_dbg_bit, STRIPPATH(__FILE__), __LINE__, __FUNCTION__, ##arg); };
+#define hd_inf(format, arg...) printk("hdshm: INFO            %s: " format, __FUNCTION__, ##arg);
+#define hd_err(format, arg...) printk("hdshm: ERROR           %s: " format, __FUNCTION__, ##arg);
+
+#define dbg1(format, arg...) hd_dbg(HD_DEBUG_BIT_MODULE_TODO, format, ## arg)
+
 #include "hdshm_gen.h"
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0))
 #define HDSHM_MAJOR 246
+#else
+// conflicts with: 246 watchdog -> use 146 by "best guess"
+#define HDSHM_MAJOR 199
+#endif
 
 /* --------------------------------------------------------------------- */
 // To be executed on Decypher
@@ -76,7 +100,7 @@ int hdshm_init_struct_hd(void)
 	int n;
 	hdshm_root_t *hdr;
 
-	printk("hdshm_init_struct\n");
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "called\n")
 	hdd.num_areas=0;
 	
 	hdd.start_phys=(void*)MAP_START;
@@ -87,7 +111,7 @@ int hdshm_init_struct_hd(void)
 	hdd.start_nc=ioremap(MAP_START, MAP_SIZE);
 #endif
 
-	printk("start %p nc %p\n",hdd.start,hdd.start_nc);
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdd.start(p)=%p hdd.start_nc(p)=%p\n", hdd.start, hdd.start_nc);
 
 	hdr=hdd.start;
 	memset(hdr, 0, sizeof(hdshm_root_t));
@@ -121,6 +145,7 @@ int hdshm_init_struct_hd(void)
 int hdshm_init_struct_host(void)
 {
 	struct pci_dev *hd_pci;
+	u64 addr64;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27))
 	hd_pci=pci_get_device(0x1905,0x8100,NULL);
@@ -133,9 +158,10 @@ int hdshm_init_struct_host(void)
 #endif
         if (!hd_pci)
                 return -1;
-                
+
         hdd.hd_pci=hd_pci;
 	hdd.bar1=(void*)pci_resource_start(hd_pci,1);
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found PCI device 1905:8100 hdd.bar1=0x%lx\n", hdd.bar1)
         hdd.start_phys= hdd.bar1+0x02000000+MAP_START;
 /*      hdd.start=ioremap((long)hdd.start_phys,MAP_SIZE);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0))
@@ -144,7 +170,7 @@ int hdshm_init_struct_host(void)
         hdd.start_nc=ioremap((long)hdd.start_phys,MAP_SIZE);
 #endif
 	hdd.event_count=0; */
-        u64 addr64=(u64) hdd.start_phys & 0xFFFFFFFF;
+        addr64=(u64) hdd.start_phys & 0xFFFFFFFF;
         hdd.start=ioremap(addr64,MAP_SIZE);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0))
         hdd.start_nc=ioremap_nocache(addr64,MAP_SIZE);
@@ -155,12 +181,15 @@ int hdshm_init_struct_host(void)
 
         if (!hdd.start)
         {
+#ifndef __x86_64
                 printk("hdshm_init_struct: error, hdd.start is NULL while hdd.start_phys=%lx (%llx)\n", hdd.start_phys, addr64);
+#else
+                printk("hdshm_init_struct: error, hdd.start is NULL while hdd.start_phys=%p (%llx)\n", hdd.start_phys, addr64);
+#endif
                 return -1;
         }
          
-	
-	printk("hdshm_init_struct: Phys start %p, start %p, nc-start %p\n", hdd.start_phys, hdd.start, hdd.start_nc);
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdd.start_phys=0x%lx hdd.start=%p (0x%lx) hd.start_nc=%p (0x%lx)\n", hdd.start_phys, hdd.start, hdd.start, hdd.start_nc, hdd.start_nc);
 	sema_init(&hdd.table_sem,1);
         hdd.hd_root=hdd.start_nc;
         memset(hdd.start_nc, 0, MAP_SIZE);
@@ -349,11 +378,15 @@ int hdshm_create_area(struct hdshm_file *bsf, unsigned long arg)
 	if (bsa.flags&HDSHM_MEM_HD)
         	bse->kernel=(int)hdshm_allocate_memory(&hdd, bsa.length, &bse->phys);
         else
+#ifndef __x86_64
                 bse->kernel=pci_alloc_consistent (hdd.hd_pci, bsa.length, &bse->phys);
-#endif
+#else
+                bse->kernel=pci_alloc_consistent (hdd.hd_pci, (size_t) bsa.length, (dma_addr_t) &bse->phys);
+#endif // __x86_64
+#endif // CONFIG_MIPS
 
-	dbg("create_area id %x bse %p,  physical %p, kernel %p length %x", 
-	    bsa.id, bse, (void*)bse->phys, (void*)bse->kernel, bsa.length);
+//	dbg("create_area id %x bse %p,  physical %p, kernel %p length %x", 
+//	    bsa.id, bse, (void*)bse->phys, (void*)bse->kernel, bsa.length); // TODO -Wint-to-pointer-cast
 	if (!bse->kernel) {
 		hdshm_unlock_table();
 		return -ENOMEM;
@@ -381,7 +414,7 @@ int hdshm_destroy_area_sub(int id)
 		return -EBUSY;
 	
 	dbg1("destroy_area bse=%p",bse);
-	dbg("free %x %p %p", bse->length, (void*)bse->kernel, (void*)bse->phys);
+	// dbg("free %x %p %p", bse->length, (void*)bse->kernel, (void*)bse->phys); // TODO -Wint-to-pointer-cast
 	hdshm_free_memory(&hdd, bse->phys, bse->length);
 
 	hdd.hd_root->ids[num_entry]=0;
@@ -459,7 +492,7 @@ int hdshm_release (struct inode *inode, struct file *file)
 {
 	struct hdshm_file *bsf=(struct hdshm_file*)file->private_data;
 	int n,id;
-	dbg1("close");
+	dbg1("called");
 	if (hdshm_lock_table()) {
 		goto release_error;
 	}
@@ -526,40 +559,64 @@ static int hdshm_ioctl (struct inode *inode, struct file *file, unsigned int cmd
 static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 #endif
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
 	int ret=0;
+#else
+	long ret=0;
+#endif
 	struct hdshm_file *bsf=(struct hdshm_file*)file->private_data;
 
 	switch(cmd) {
 	case IOCTL_HDSHM_GET_AREA:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_AREA with arg=%lx\n", arg)
 		ret=hdshm_get_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_SET_ID:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_SET_ID with arg=%lx\n", arg)
 		ret=hdshm_set_id(bsf,arg);
 		break;
 	case IOCTL_HDSHM_CREATE_AREA:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_CREATE_AREA with arg=%lx\n", arg)
 		ret=hdshm_create_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_DESTROY_AREA:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_DESTROY_AREA with arg=%lx\n", arg)
 		ret=hdshm_destroy_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_GET_STATUS:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_STATUS with arg=%lx\n", arg)
 		ret=hdshm_get_status(bsf,arg);
 		break;
 	case IOCTL_HDSHM_RESET:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_RESET with arg=%lx\n", arg)
 		ret=hdshm_reset(bsf,arg);
 		break;
 	case IOCTL_HDSHM_UNMAP_AREA:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_UNMAP_AREA with arg=%lx\n", arg)
 		ret=hdshm_unmap_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_GET_ROOT:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_ROOT\n")
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
 		ret=(int)hdd.hd_root; // HACK FIXME
+#else
+		ret=(long)hdd.hd_root; // HACK FIXME
+#endif
 		break;
 	case IOCTL_HDSHM_FLUSH:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_FLUSH\n")
 		break;
 	case IOCTL_HDSHM_PCIBAR1:
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_PCIBAR1 result hdd.bar1=%lx\n", hdd.bar1)
 		return (int)hdd.bar1;  // HACK FIXME
+#else
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_PCIBAR1 result hdd.bar1=%lx\n", hdd.bar1)
+		return (long)hdd.bar1;  // HACK FIXME
+#endif
 		break;
 	case IOCTL_HDSHM_SHUTDOWN:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_SHUTDOWN with arg=%d\n", arg)
 	        hdd.hd_root->booted=arg;
 	        break;
 #ifdef CONFIG_MIPS
@@ -572,9 +629,10 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
                 
 #endif        
 	default:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with unsupported cmd=%d arg=%d\n", cmd, arg)
 		break;
 	}
-	dbg1("usage h %i b %i",hdd.hd_root->host_usage,hdd.hd_root->hd_usage);
+	// hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "usage h %i b %i", hdd.hd_root->host_usage,hdd.hd_root->hd_usage)
 	return ret;
 }
 /* --------------------------------------------------------------------- */
@@ -590,7 +648,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 #endif
 	int length;
 
-	dbg1("mmap id %x flags %x",bsf->id,(int)vma->vm_flags);
+	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "mmap id %x flags %x",bsf->id,(int)vma->vm_flags);
 
 	if (!bsf->id) 
 		return -EINVAL;		
@@ -606,7 +664,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 			return -EEXIST;
 		}
 	}
-	dbg1("mmap find");
+	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "mmap find");
 	bse=hdshm_find_area(bsf->id,NULL);
 	
 	if (!bse) {
@@ -614,7 +672,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 		hdshm_unlock_table();
 		return -ENOENT;		
 	}
-	dbg1("mmap bse=%p user %x phys=%x size %x offset %x",
+	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "mmap bse=%p user %x phys=%x size %x offset %x",
 	    bse,
 	    (int)vma->vm_start,
 	    (int)bse->phys,
@@ -628,7 +686,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 	if (uncached)
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-	dbg1("uncached %x pgprot %x",uncached,(int)pgprot_val(vma->vm_page_prot));	
+	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "uncached %x pgprot %x",uncached,(int)pgprot_val(vma->vm_page_prot));	
 
 	vma->vm_private_data=bse;
 #if   LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
@@ -664,7 +722,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 #ifndef __x86_64
 		phys_start = (dma_addr_t)(hdd.start_phys-MAP_START)+(bse->phys&~4095); // FIXME -MAP!
 #else
-                phys_start = (uint32_t)(hdd.start_phys-MAP_START)+(bse->phys&~4095); // FIXME -MAP!
+                phys_start = (uint32_t) ((hdd.start_phys-MAP_START)+(bse->phys&~4095)) & 0xFFFFFFFF; // FIXME -MAP!
 #endif
 	}
 	else {
@@ -678,7 +736,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 
 	length=vma->vm_end-vma->vm_start; 
 
-        dbg1("MAP PHYSICAL: %p, length %x\n",(void*)phys_start, length);
+        hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "MAP PHYSICAL: %p, length %x\n",(void*)phys_start, length);
         remap_pfn_range(vma, vma->vm_start, phys_start>>PAGE_SHIFT, length, vma->vm_page_prot);
         
 	bse->usage++;	
@@ -721,15 +779,27 @@ static struct class *hdshm_class;
 static int __init hdshm_init(void) 
 {
         int retval;
+	hd_inf("init start with hd_dbg_mask=%08x\n", hd_dbg_mask)
 #ifdef IS_HD        
 	retval=hdshm_init_struct_hd();
 #else
         retval=hdshm_init_struct_host();
 #endif	
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdshm_init_struct_host retval=%d\n", retval)
 	if (retval)
 		return retval;
 
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "register_chrdev call with major=%d\n", HDSHM_MAJOR)
         retval= register_chrdev(HDSHM_MAJOR, "hdshm", &hdshm_fops);
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "register_chrdev retval=%d\n", retval)
+	if (retval == -EBUSY) {
+		hd_err("register_chrdev was not successful because major=%d already in use (check /proc/devices and HDSHM_MAJOR in source code)\n", HDSHM_MAJOR)
+	};
+
+	if (retval)
+		return retval;
+
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "register_chrdev successful\n")
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))	
         devfs_mk_cdev(MKDEV(HDSHM_MAJOR, 0),
@@ -746,11 +816,15 @@ static int __init hdshm_init(void)
                            NULL, "hdshm");
 #endif
 #endif
-	if (retval)
-		return retval;
 #ifdef HAS_HD_FB
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "call hdfb_init\n")
 	retval = hdfb_init();
 #endif
+	if (retval == 0) {
+		hd_inf("init finished successful\n");
+	} else {
+		hd_err("init finished with problem: retval=%d\n", retval)
+	};
 	return retval;
 }
 
@@ -759,10 +833,13 @@ static int __init hdshm_init(void)
 static void __exit hdshm_exit(void)
 {
 	int n;
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "exit start\n")
 #ifdef HAS_HD_FB
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call hdfb_exit\n")
 	hdfb_exit();
 #endif
 #if 1
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call hdshm_destroy_area_sub\n")
 	for(n=0;n<ENTRIES_FOR_ROOT;n++)
 		if (hdd.hd_root->ids[n])
 			hdshm_destroy_area_sub(hdd.hd_root->ids[n]);
@@ -770,20 +847,28 @@ static void __exit hdshm_exit(void)
 	hdd.hd_root->running=0;
 	hdd.hd_root->magic=0;
 
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call iounmap for hdd.start\n")
 	iounmap(hdd.start);
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call iounmap for hdd.start_nc\n")
 	iounmap(hdd.start_nc);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17))
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27))
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call class_device_destroy\n")
 	class_device_destroy(hdshm_class, MKDEV(HDSHM_MAJOR, 0));
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call class_destroy\n")
 	class_destroy(hdshm_class);
 #else
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call device_destroy\n")
 	device_destroy(hdshm_class, MKDEV(HDSHM_MAJOR, 0));
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call class_destroy\n")
 	class_destroy(hdshm_class);
 #endif
 #endif
 	
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call unregister_chrdev for major=%d\n", HDSHM_MAJOR)
         unregister_chrdev(HDSHM_MAJOR,"hdshm");
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "exit finished\n")
 }
                                 
 module_init(hdshm_init);

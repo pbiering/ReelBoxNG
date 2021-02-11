@@ -11,7 +11,18 @@
 
 #ifndef _HDSHM_H
 #define _HDSHM_H
+#ifndef __x86_64
 #define __x86_64
+#endif
+
+// debug
+extern uint32_t hd_debug_mask;
+#define HD_DEBUG_BIT_MODULE_TODO	0x01000000
+#define HD_DEBUG_BIT_MODULE_INIT	0x00010000
+#define HD_DEBUG_BIT_MODULE_EXIT	0x00020000
+#define HD_DEBUG_BIT_MODULE_IOCTL	0x00001000
+#define HD_DEBUG_BIT_MODULE_MMAP	0x00002000
+#define HD_DEBUG_BIT_MODULE_HDFB	0x00000100
 
 typedef struct {
 	int id;
@@ -80,18 +91,33 @@ typedef struct {
 #else
 	uint32_t phys; // 4 Byte
 #endif
+#ifndef __x86_64
 	unsigned int kernel; 
 	unsigned int kernel1; 
 	int length;
 	int flags;
 	int usage; // Counting only host usage!
 	int dummmy[2];  // 32 Byte
+#else
+	uint32_t kernel; 
+	uint32_t kernel1; 
+	int32_t length;
+	int32_t flags;
+	int32_t usage; // Counting only host usage!
+	int32_t dummmy[2];  // 32 Byte
+#endif
 } hdshm_entry_t;
 
 typedef struct {
+#ifndef __x86_64
 	int magic;
 	int running;
+#else
+	int32_t magic;
+	int32_t running;
+#endif
 	atomic_t table_lock;
+#ifndef __x86_64
 	int host_usage; // mapped host mem
 	int hd_usage;  // mapped hd mem
 	int mapped_by_hd;
@@ -100,6 +126,16 @@ typedef struct {
 	int dummy1[8];
 	int alloc_bits[HD_ALLOC_PAGES/32];
 	int ids[ENTRIES_FOR_ROOT];
+#else
+	int32_t host_usage; // mapped host mem
+	int32_t hd_usage;  // mapped hd mem
+	int32_t mapped_by_hd;
+	int32_t booted; // cleared at host startup and hdboot, set by DeCypher driver startup
+	int32_t dummy;	
+	int32_t dummy1[8];
+	int32_t alloc_bits[HD_ALLOC_PAGES/32];
+	int32_t ids[ENTRIES_FOR_ROOT];
+#endif
 	hdshm_entry_t entries[0];
 } hdshm_root_t;
 

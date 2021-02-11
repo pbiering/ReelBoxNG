@@ -1,7 +1,11 @@
 
 #ifndef _HDSHM_GEN_H
 #define _HDSHM_GEN_H
+#ifndef __x86_64
 #define __x86_64
+#endif
+
+#include "hdshm.h"
 
 /* --------------------------------------------------------------------- */
 // Needs lock
