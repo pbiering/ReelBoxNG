@@ -146,6 +146,7 @@ int hdshm_init_struct_host(void)
 {
 	struct pci_dev *hd_pci;
 	u64 addr64;
+	int retval;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27))
 	hd_pci=pci_get_device(0x1905,0x8100,NULL);
@@ -159,9 +160,31 @@ int hdshm_init_struct_host(void)
         if (!hd_pci)
                 return -1;
 
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found PCI device 1905:8100\n")
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0))
+	// enabling the device
+	retval = pci_enable_device(hd_pci);
+	if(retval) {
+		hd_err("failed to enable PCI device 1905:8100\n");
+		return -1;
+	};
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "enabled PCI device successfully 1905:8100\n")
+
+	// take ownership of pci related regions
+	pci_request_regions(hd_pci, "expdev");
+
+	// checking if PCI-device reachable by checking that BAR0 is defined and memory mapped
+	if( !(pci_resource_flags(hd_pci,1) & IORESOURCE_MEM) ) {
+		hd_err("incorrect BAR1 configuration of PCI device 1905:8100\n");
+		return(-ENODEV);
+	};
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found BAR1 configuration for PCI device 1905:8100")
+#endif
+
         hdd.hd_pci=hd_pci;
 	hdd.bar1=(void*)pci_resource_start(hd_pci,1);
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found PCI device 1905:8100 hdd.bar1=0x%lx\n", hdd.bar1)
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found BAR1 address for PCI device 1905:8100 hdd.bar1=0x%lx\n", hdd.bar1)
         hdd.start_phys= hdd.bar1+0x02000000+MAP_START;
 /*      hdd.start=ioremap((long)hdd.start_phys,MAP_SIZE);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0))
@@ -189,11 +212,16 @@ int hdshm_init_struct_host(void)
                 return -1;
         }
          
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdd.start_phys=0x%lx hdd.start=%p (0x%lx) hd.start_nc=%p (0x%lx)\n", hdd.start_phys, hdd.start, hdd.start, hdd.start_nc, hdd.start_nc);
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdd.start_phys=0x%lx hdd.start=%p (0x%lx) hd.start_nc=%p (0x%lx) addr64=%llx\n", hdd.start_phys, hdd.start, hdd.start, hdd.start_nc, hdd.start_nc, addr64);
 	sema_init(&hdd.table_sem,1);
         hdd.hd_root=hdd.start_nc;
         memset(hdd.start_nc, 0, MAP_SIZE);
         hdd.hd_root->booted=0;
+	if (hdd.hd_root->booted != 0) {
+		hd_err("hdd.hd_root->booted=%x (read from shared memory returned unexpected value != 0)\n", hdd.hd_root->booted);
+		return -1;
+	};
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hhdd.hd_root->booted=%x (successful read from shared memory)\n", hdd.hd_root->booted);
         return 0;  
 }
 /* --------------------------------------------------------------------- */
