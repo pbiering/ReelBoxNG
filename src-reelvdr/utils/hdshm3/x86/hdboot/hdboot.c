@@ -232,7 +232,7 @@ int load(char *fname, unsigned char *pci_base, int jump, int verify, char *cmdli
 	}
 }
 /*------------------------------------------------------------------------*/
-void warm_reset(unsigned char *pci_base)
+int warm_reset(unsigned char *pci_base)
 {
 	int fd;
 //	printf("%x\n",CCB_REG_CCBCTRL);
@@ -246,6 +246,13 @@ void warm_reset(unsigned char *pci_base)
 	*(volatile int*)(pci_base+CCB_REG_CCBCTRL)|=1;
 	*(volatile int*)(pci_base+CCB_REG_CCBCTRL)&=~1;
 	*(volatile int*)(pci_base+SEM_3_SCRATCH_REG)=0;
+
+	// verify mapping
+	if (*(volatile int*)(pci_base+SEM_3_SCRATCH_REG)!=0) {
+		fprintf(stderr,"%s:major problem: PCI memory mapping not working pci_base+SEM_3_SCRATCH_REG=%x but has to be 0\n", __FUNCTION__, *(volatile int*) (pci_base+SEM_3_SCRATCH_REG));
+		return 1;
+	};
+	return 0;
 }
 /*------------------------------------------------------------------------*/
 void run_cpu(unsigned char *pci_base, int jump)
@@ -334,6 +341,7 @@ int main(int argc, char ** argv)
 	int verify=0;
 	int wait=-1;
 	int no_mtrr=0;
+	int retval;
 
 	while ((i = getopt(argc, argv, "c:e:i:p:rvw:M")) != -1) {
 		switch (i) 
@@ -379,7 +387,9 @@ int main(int argc, char ** argv)
 	if (strlen(fname)) {
 		disable_pci_burst(bar1);
 		if (wait_for_pciboot(pci_base,0) || do_reset) {
-			warm_reset(pci_base);
+			retval = warm_reset(pci_base);
+			if (retval)
+				exit(1);
 			sleep(2);
 		}
 		upload_start(pci_base, fname, entry, verify, cmdline);
