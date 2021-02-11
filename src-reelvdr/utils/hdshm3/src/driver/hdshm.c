@@ -163,6 +163,7 @@ int hdshm_init_struct_host(void)
 	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found PCI device 1905:8100\n")
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0))
+	// parts taken from https://stackoverflow.com/questions/35682482/how-to-access-pci-memory-from-linux-kernel-space-by-memory-mapping-kernel-3-14
 	// enabling the device
 	retval = pci_enable_device(hd_pci);
 	if(retval) {
