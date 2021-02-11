@@ -77,6 +77,8 @@ unsigned char* pcimap(off_t offset)
 {
         int fd1;
 	void *base;
+
+	fprintf(stderr, "%s: called with offset=%x\n", __FUNCTION__, (unsigned) offset);
 		
         if ((fd1 = open("/dev/mem", O_RDWR)) < 0) {
                 fprintf(stderr, "Failed to open /dev/mem (%s). Are you root?\n",
@@ -88,16 +90,19 @@ unsigned char* pcimap(off_t offset)
                                     PROT_READ|PROT_WRITE,
                                     MAP_SHARED, fd1,
 #ifndef __x86_64
-                                    offset);
+                                    offset
 #else
-                                    (unsigned)offset);
+                                    (unsigned)offset
 #endif
+	);
+	close(fd1);
         if (base==MAP_FAILED) {       
                 fprintf(stderr, " Failed to mmap PCI (%s)\n",
                        strerror(errno));
 		return 0;
         }
 	
+	fprintf(stderr, "%s: result mmap base=%p\n", __FUNCTION__, base);
 	return (unsigned char*)base;
 }
 /*------------------------------------------------------------------------*/
@@ -254,9 +259,11 @@ void run_cpu(unsigned char *pci_base, int jump)
 
 int wait_for_pciboot(unsigned char *pci_base, int timeout_s)
 {
+	fprintf(stderr, "%s: called\n", __FUNCTION__);
 	int n;
 	for(n=0;n<1+timeout_s*10;n++) {
-//		printf("%x\n",*(volatile int*)(pci_base+SEM_3_SCRATCH_REG));
+		if ((n % 10) == 0)
+			fprintf(stderr, "%s: pci_base=%p %x\n",__FUNCTION__, pci_base, *(volatile int*)(pci_base+SEM_3_SCRATCH_REG));
 		if (*(volatile int*)(pci_base+SEM_3_SCRATCH_REG)==0xb001abcd)
 			return 0;
 		usleep(100*1000);
@@ -266,6 +273,7 @@ int wait_for_pciboot(unsigned char *pci_base, int timeout_s)
 /*------------------------------------------------------------------------*/
 void upload_start(unsigned char *pci_base, char *fname, int jump, int verify, char *cmdline)
 {		
+	fprintf(stderr, "%s: called with pci_base=%p\n", __FUNCTION__, pci_base);
 	if (wait_for_pciboot(pci_base,U_BOOT_TIMEOUT)) {
 		fprintf(stderr,"Timeout: U-Boot not ready for PCI boot\n");
 		exit(-1);
@@ -366,6 +374,7 @@ int main(int argc, char ** argv)
 		bar1=find_decypher();
 
 	pci_base=pcimap(bar1);
+	fprintf(stderr, "%s: map bar1=%x to pci_base=%p\n", __FUNCTION__, bar1, pci_base);
 
 	if (strlen(fname)) {
 		disable_pci_burst(bar1);
