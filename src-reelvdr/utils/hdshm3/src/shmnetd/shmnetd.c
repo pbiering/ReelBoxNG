@@ -46,7 +46,7 @@ int tun_alloc(char *dev)
       memset(&ifr, 0, sizeof(ifr));     
       ifr.ifr_flags = IFF_TUN; 
       if( *dev )
-         strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+         memcpy(ifr.ifr_name, dev, IFNAMSIZ);
 
       if( (err = ioctl(fd, TUNSETIFF, (void *) &ifr)) < 0 ){
          close(fd);
