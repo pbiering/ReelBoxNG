@@ -63,6 +63,11 @@ static hdshm_data_t hdd; // FIXME allow multiple devices
 #endif
 
 
+#ifdef HAS_HD_FB
+extern void hdfb_exit(void);
+#endif
+
+
 //#define dbg1(format, arg...) do {} while (0)
 #define dbg(format, arg...)  printk(format"\n", ## arg)
 #define err(format, arg...) printk(format"\n", ## arg)
@@ -616,7 +621,7 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 #endif
 	struct hdshm_file *bsf=(struct hdshm_file*)file->private_data;
 
-	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with cmd=%x arg=0x%lx\n", cmd, arg)
+	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL2, "called with cmd=%x arg=0x%lx\n", cmd, arg)
 
 	switch(cmd) {
 	case IOCTL_HDSHM_GET_AREA:
@@ -683,13 +688,22 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 	case IOCTL_HDSHM_DEBUG:
 		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_DEBUG with arg=0x%lx\n", arg)
 	        hd_dbg_mask = (uint32_t) (arg & 0xFFFFFFFF);
-		hd_inf("debug mask changed via IOCTL to hd_dbg_mask=%08x\n", hd_dbg_mask)
+		hd_inf("debug mask changed via IOCTL to hd_dbg_mask=0x%08x\n", hd_dbg_mask)
+	        break;
+	case IOCTL_HDSHM_HDFBEXIT:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_HDFBEXIT with arg=0x%lx\n", arg)
+#ifdef HAS_HD_FB
+		hd_inf("trigger hdfb_exit\n")
+		hdfb_exit();
+#else
+		hd_inf("trigger hdfb_exit is not supported (not compiled-in)\n")
+#endif
 	        break;
 	default:
 		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with unsupported cmd=%d arg=0x%lx\n", cmd, arg)
 		break;
 	}
-	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "hdd.hd_root->host_usage=%i hdd.hd_root->hd_usage=%i", hdd.hd_root->host_usage,hdd.hd_root->hd_usage)
+	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL2, "hdd.hd_root->host_usage=%i hdd.hd_root->hd_usage=%i", hdd.hd_root->host_usage,hdd.hd_root->hd_usage)
 	return ret;
 }
 /* --------------------------------------------------------------------- */
@@ -836,7 +850,7 @@ static struct class *hdshm_class;
 static int __init hdshm_init(void) 
 {
         int retval;
-	hd_inf("init start with hd_dbg_mask=%08x\n", hd_dbg_mask)
+	hd_inf("init start with hd_dbg_mask=0x%08x\n", hd_dbg_mask)
 #ifdef IS_HD        
 	retval=hdshm_init_struct_hd();
 #else
@@ -922,9 +936,18 @@ static void __exit hdshm_exit(void)
 	class_destroy(hdshm_class);
 #endif
 #endif
-	
+
 	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call unregister_chrdev for major=%d\n", HDSHM_MAJOR)
         unregister_chrdev(HDSHM_MAJOR,"hdshm");
+
+#ifdef IS_HD
+	// something TODO ?
+#else
+	// free PCI region
+	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call pci_release_regions\n")
+	pci_release_regions(hdd.hd_pci);
+#endif
+
 	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "exit finished\n")
 }
                                 
