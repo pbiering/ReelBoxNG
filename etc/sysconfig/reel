@@ -25,6 +25,18 @@ GRAPHLCDIMAGEPREFIX="image-128x64-bm2lts-"
 GRAPHLCDIMAGEPREFIX="image-128x64-easyvdr-"
 
 
+### eHD
+
+## eHD/kernel module
+HDSHM_MODULE="extra/hdshm3/hdshm.ko"
+HDSHM_OPTIONS="has_fb=1"
+
+## eHD/boot image
+HD_BOOT_IMAGE="/path/to/linux.bin"
+HD_BOOT_TIMEOUT="20"
+HD_BOOT_BIN="/opt/reel/sbin/hdboot"
+
+
 ### Wakeup
 
 ## Default file where next wakeup is stored
