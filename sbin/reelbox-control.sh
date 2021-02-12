@@ -17,6 +17,7 @@
 # 20210128/pbev: optional read of confing /etc/sysconfig/reel
 # 20210131/pbev: honor global BCONTROL and add option for brightness to set_led_button, use BCOLOR for "on"
 # 20210201/pbev: keep (defined) button LED brightness on status LED change
+# 20210212/pbev: add support for eHD (kernel/boot)
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -678,6 +679,70 @@ StopRemote() {
 	return 0
 }
 
+## setup eHD Kernel
+SetupEhdKernel() {
+	if [ -z "$HDSHM_MODULE" ]; then
+		Syslog "ERROR" "setup of eHD/kernel requires HDSHM_MODULE set"
+		return 1
+	fi
+
+	if [ -z "$HDSHM_OPTIONS" ]; then
+		Syslog "ERROR" "setup of eHD/kernel requires HDSHM_OPTIONS set"
+		return 1
+	fi
+
+	local hdshm_module_file="/lib/modules/$(uname -r)/$HDSHM_MODULE"
+	if [ ! -e "$hdshm_module_file" ]; then
+		Syslog "ERROR" "setup of eHD/kernel requires module: $hdshm_module_file"
+		return 1
+	fi
+
+	insmod $hdshm_module_file $HDSHM_OPTIONS
+	rc=$?
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/kernel can't load module: $hdshm_module_file $HDSHM_OPTIONS"
+		return 1
+	fi
+
+	Syslog "INFO" "setup of eHD/kernel module successfully loaded: $hdshm_module_file $HDSHM_OPTIONS"
+}
+
+## setup eHD Boot
+SetupEhdBoot() {
+	if [ -z "$HD_BOOT_IMAGE" ]; then
+		Syslog "ERROR" "setup of eHD/boot requires defined HD_BOOT_IMAGE"
+		return 1
+	fi
+
+	if [ ! -e "$HD_BOOT_IMAGE" ]; then
+		Syslog "ERROR" "setup of eHD/boot requires image: $HD_BOOT_IMAGE"
+		return 1
+	fi
+
+	if [ -z "$HD_BOOT_TIMEOUT" ]; then
+		HD_BOOT_TIMEOUT=20
+		Syslog "NOTICE" "setup of eHD/boot uses default timeout: $HD_BOOT_TIMEOUT"
+	fi
+
+	if [ -z "$HD_BOOT_BIN" ]; then
+		HD_BOOT_BIN="/opt/reel/sbin/hdboot"
+		Syslog "NOTICE" "setup of eHD/boot uses default binary: $HD_BOOT_BIN"
+	fi
+
+	if [ ! -x "$HD_BOOT_BIN" ]; then
+		Syslog "ERROR" "setup of eHD/boot requires binary: $HD_BOOT_BIN"
+		return 1
+	fi
+
+	$HD_BOOT_BIN -r -w $HD_BOOT_TIMEOUT -i $HD_BOOT_IMAGE
+	rc=$?
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/boot can't load image: $HD_BOOT_IMAGE"
+		return 1
+	fi
+
+	Syslog "INFO" "setup of eHD/boot successfully loaded image: $HD_BOOT_IMAGE"
+}
 
 ## Basic checks
 if [ ! -x "$REELFPCTL" ]; then
@@ -730,6 +795,12 @@ case $arg1 in
     set_led_button)
 	SetLEDButton $*
 	;;
+    setup_ehd_kernel)
+	SetupEhdKernel $*
+	;;
+    setup_ehd_boot)
+	SetupEhdBoot $*
+	;;
     *)
 	cat <<END
 Supported arg1
@@ -757,6 +828,10 @@ Supported arg1
 		enable/disable/blink LED
 	set_led_button <color>|off|on [<brightness 1-15>|max]
 		set color of button LEDs
+	setup_ehd_kernel
+		setup eHD loading kernel module
+	setup_ehd_boot
+		setup eHD boot eHD linux
 END
 	;;
 esac
