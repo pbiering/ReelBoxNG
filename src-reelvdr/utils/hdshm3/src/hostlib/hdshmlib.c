@@ -223,8 +223,10 @@ int hd_init(int start)
     if (hdfd == -1)
     {
         hdfd = open(SHMHDDEV, O_RDWR);
-        if (hdfd == -1)
+        if (hdfd == -1) {
+            dbg("HOST: hd_init not successful, can't open %s\n", SHMHDDEV);
             return -1;
+	};
     }
     dbg("HOST: hd_init successful start=%d hdfd=%d\n", start, hdfd);
     return 0;
