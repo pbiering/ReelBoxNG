@@ -47,16 +47,17 @@ typedef struct {
 #define IOCTL_HDSHM_GET_AREA     _IOWR('d', 0x1, hdshm_area_t* ) 
 #define IOCTL_HDSHM_SET_ID       _IOWR('d', 0x2, int ) 
 #define IOCTL_HDSHM_CREATE_AREA  _IOWR('d', 0x3, hdshm_area_t* ) 
-#define IOCTL_HDSHM_DESTROY_AREA  _IOWR('d', 0x4, hdshm_area_t* ) 
-#define IOCTL_HDSHM_GET_STATUS    _IOR('d', 0x5, int) 
-#define IOCTL_HDSHM_RESET         _IOR('d', 0x6, int) 
+#define IOCTL_HDSHM_DESTROY_AREA _IOWR('d', 0x4, hdshm_area_t* )
+#define IOCTL_HDSHM_GET_STATUS   _IOR('d', 0x5, int)
+#define IOCTL_HDSHM_RESET        _IOR('d', 0x6, int)
 #define IOCTL_HDSHM_UNMAP_AREA   _IOWR('d', 0x7, int ) 
 #define IOCTL_HDSHM_GET_ROOT     _IOR('d', 0x8, int ) 
-#define IOCTL_HDSHM_FLUSH     _IOR('d', 0x9, int ) 
-#define IOCTL_HDSHM_PCIBAR1     _IOR('d', 0xa, int ) 
-#define IOCTL_HDSHM_SHUTDOWN     _IOWR('d', 0xb, int) 
+#define IOCTL_HDSHM_FLUSH        _IOR('d', 0x9, int )
+#define IOCTL_HDSHM_PCIBAR1      _IOR('d', 0xa, int )
+#define IOCTL_HDSHM_SHUTDOWN     _IOWR('d', 0xb, int)
 #define IOCTL_HDSHM_DMA          _IOWR('d', 0xc, hdshm_dma_t*)
-#define IOCTL_HDSHM_CMDLINE      _IOR('d', 0xc, char[256])
+#define IOCTL_HDSHM_CMDLINE      _IOR('d', 0xc, char[256]) // TODO check: has same 0xc as DMA ?!
+#define IOCTL_HDSHM_DEBUG        _IOW('d', 0xf, int)
 
 #define HDSHM_MAGIC 0x47124321
 

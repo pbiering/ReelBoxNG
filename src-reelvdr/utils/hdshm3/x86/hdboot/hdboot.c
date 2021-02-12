@@ -322,14 +322,16 @@ void usage(void)
 {
 	fprintf(stderr,
 		"Usage: hdboot <options>\n"
-		"       -r        Force warm reset\n"
-		"       -p <hex>  Manually set PCI BAR1 (DANGEROUS!!!)\n"
-		"       -i <file> Upload file (default: linux.bin)\n"
-		"       -e <hex>  Manually set kernel entry address (default: auto detect)\n"
-		"       -v        Verify DDR-RAM after upload\n"
-		"       -w <timeout>  Wait until kernel is up\n"
-		"       -c <string>   Commandline\n"
-		"       -M         Disable MTRR speedup\n");
+		"       -r           Force warm reset\n"
+		"       -p <hex>     Manually set PCI BAR1 (DANGEROUS!!!)\n"
+		"       -i <file>    Upload file (default: linux.bin)\n"
+		"       -e <hex>     Manually set kernel entry address (default: auto detect)\n"
+		"       -v           Verify DDR-RAM after upload\n"
+		"       -w <timeout> Wait until kernel is up\n"
+		"       -c <string>  Commandline\n"
+		"       -M           Disable MTRR speedup\n"
+		"Extra options for kernel module:\n"
+		"       -D <hexint>  Configure kernel module debug mask\n");
 	exit(1);
 }
 /*------------------------------------------------------------------------*/
@@ -346,8 +348,10 @@ int main(int argc, char ** argv)
 	int wait=-1;
 	int no_mtrr=0;
 	int retval;
+	int fd;
+	uint32_t hd_dbg_mask;
 
-	while ((i = getopt(argc, argv, "c:e:i:p:rvw:M")) != -1) {
+	while ((i = getopt(argc, argv, "c:e:i:p:rvw:MD:")) != -1) {
 		switch (i) 
 		{
 		case 'c':
@@ -372,6 +376,26 @@ int main(int argc, char ** argv)
 			break;
 		case 'w':
 			wait=atoi(optarg);
+			break;
+		case 'D':
+			// quick hack
+			if (sscanf(optarg, "%x", &hd_dbg_mask) != 1) {
+				printf("ERROR : can't parse debug value: %s\n",optarg);
+				exit(1);
+			};
+			fd=open("/dev/hdshm",O_RDWR);
+			if (fd<0) {
+				printf("ERROR : can't open kernel module device /dev/hdshm (executed as root and module loaded?)\n");
+				exit(1);
+			}
+			printf("Set hd_dbg_mask=%08x in kernel module via IOCTL\n",hd_dbg_mask);
+			retval = ioctl(fd, IOCTL_HDSHM_DEBUG, hd_dbg_mask);
+			close(fd);
+			if (retval != 0) {
+				printf("ERROR : problem setting hd_dbg_mask=%08x in kernel module via IOCTL\n",hd_dbg_mask);
+				exit(1);
+			};
+			exit(0);
 			break;
 		case 'M':
 			no_mtrr=1;

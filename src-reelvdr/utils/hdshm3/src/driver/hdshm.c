@@ -680,6 +680,11 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
                 break;
                 
 #endif        
+	case IOCTL_HDSHM_DEBUG:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_DEBUG with arg=0x%lx\n", arg)
+	        hd_dbg_mask = (uint32_t) (arg & 0xFFFFFFFF);
+		hd_inf("debug mask changed via IOCTL to hd_dbg_mask=%08x\n", hd_dbg_mask)
+	        break;
 	default:
 		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with unsupported cmd=%d arg=0x%lx\n", cmd, arg)
 		break;
