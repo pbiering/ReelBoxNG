@@ -483,8 +483,12 @@ int hdfb_init(void) {
 } // hdfb_init
 
 void hdfb_exit(void) {
+	static int flag_already_called = 0;
+
 	hd_fb_dbg("exit has_fb=%d", has_fb);
 	if (!has_fb)
 		return;
-	unregister_framebuffer(&hdefb.fb_info);
+	if (flag_already_called == 0)
+		unregister_framebuffer(&hdefb.fb_info);
+	flag_already_called = 1;
 } // hdfb_exit
