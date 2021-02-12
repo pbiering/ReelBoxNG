@@ -24,7 +24,11 @@
 
 static int has_fb = 0;
 module_param(has_fb, int, 0);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)) // TODO: check when "hexint" was introduced
 module_param(hd_dbg_mask, hexint, 0);
+#else
+module_param(hd_dbg_mask, int, 0);
+#endif
 
 struct hde_fb {
 	struct fb_info fb_info; 
