@@ -331,9 +331,29 @@ void usage(void)
 		"       -c <string>  Commandline\n"
 		"       -M           Disable MTRR speedup\n"
 		"Extra options for kernel module:\n"
-		"       -D <hexint>  Configure kernel module debug mask\n");
+		"       -D <hexint>  Configure kernel module debug mask via IOCTL\n"
+		"       -E           Send HDFBEXIT to kernel module via IOCTL\n");
 	exit(1);
 }
+
+/*------------------------------------------------------------------------*/
+int hdshm_ioctl(unsigned int cmd, unsigned long arg) {
+	int fd;
+	int retval;
+	fd=open("/dev/hdshm",O_RDWR);
+	if (fd<0) {
+		printf("ERROR : can't open kernel module device /dev/hdshm (executed as root and module loaded?)\n");
+		return 1;
+	}
+	retval = ioctl(fd, cmd, arg);
+	close(fd);
+	if (retval != 0) {
+		printf("ERROR : problem with IOCTL in kernel module\n");
+		return 1;
+	};
+	return 0;
+}
+
 /*------------------------------------------------------------------------*/
 int main(int argc, char ** argv)
 {
@@ -348,10 +368,9 @@ int main(int argc, char ** argv)
 	int wait=-1;
 	int no_mtrr=0;
 	int retval;
-	int fd;
 	uint32_t hd_dbg_mask;
 
-	while ((i = getopt(argc, argv, "c:e:i:p:rvw:MD:")) != -1) {
+	while ((i = getopt(argc, argv, "c:e:i:p:rvw:MD:E")) != -1) {
 		switch (i) 
 		{
 		case 'c':
@@ -377,24 +396,29 @@ int main(int argc, char ** argv)
 		case 'w':
 			wait=atoi(optarg);
 			break;
+		case 'E':
+			printf("Trigger HDFBEXIT to kernel module via IOCTL\n");
+			retval = hdshm_ioctl(IOCTL_HDSHM_HDFBEXIT, 0);
+			if (retval != 0) {
+				printf("ERROR : problem triggering HDFBEXIT to kernel module via IOCTL\n");
+				exit(1);
+			};
+			printf("Successfully triggered HDFBEXIT to kernel module via IOCTL\n");
+			exit(0);
+			break;
 		case 'D':
 			// quick hack
-			if (sscanf(optarg, "%x", &hd_dbg_mask) != 1) {
+			if (sscanf(optarg, "0x%x", &hd_dbg_mask) != 1) {
 				printf("ERROR : can't parse debug value: %s\n",optarg);
 				exit(1);
 			};
-			fd=open("/dev/hdshm",O_RDWR);
-			if (fd<0) {
-				printf("ERROR : can't open kernel module device /dev/hdshm (executed as root and module loaded?)\n");
-				exit(1);
-			}
-			printf("Set hd_dbg_mask=%08x in kernel module via IOCTL\n",hd_dbg_mask);
-			retval = ioctl(fd, IOCTL_HDSHM_DEBUG, hd_dbg_mask);
-			close(fd);
+			printf("Set hd_dbg_mask=0x%08x in kernel module via IOCTL\n",hd_dbg_mask);
+			retval = hdshm_ioctl(IOCTL_HDSHM_DEBUG, hd_dbg_mask);
 			if (retval != 0) {
-				printf("ERROR : problem setting hd_dbg_mask=%08x in kernel module via IOCTL\n",hd_dbg_mask);
+				printf("ERROR : problem setting hd_dbg_mask=0x%08x in kernel module via IOCTL\n",hd_dbg_mask);
 				exit(1);
 			};
+			printf("Successfully set hd_dbg_mask=0x%08x in kernel module via IOCTL (see kernel log for confirmation)\n",hd_dbg_mask);
 			exit(0);
 			break;
 		case 'M':
