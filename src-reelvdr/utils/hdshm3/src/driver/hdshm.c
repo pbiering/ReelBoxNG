@@ -45,7 +45,8 @@
 #define _HDSHM_IOCTLS
 #include "hdshm.h"
 
-uint32_t hd_dbg_mask = 0xffffffff;
+//uint32_t hd_dbg_mask = 0xffffffff;
+uint32_t hd_dbg_mask = 0;
 static hdshm_data_t hdd; // FIXME allow multiple devices
 
 #ifdef CONFIG_MIPS
@@ -147,45 +148,52 @@ int hdshm_init_struct_host(void)
 	struct pci_dev *hd_pci;
 	u64 addr64;
 	int retval;
+	const uint32_t pci_id_major = 0x1905;
+	const uint32_t pci_id_minor = 0x8100;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27))
-	hd_pci=pci_get_device(0x1905,0x8100,NULL);
+	hd_pci=pci_get_device(pci_id_major,pci_id_minor,NULL);
 #else
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22))
-        hd_pci=pci_get_device_reverse(0x1905,0x8100,NULL);
+        hd_pci=pci_get_device_reverse(pci_id_major,pci_id_minor,NULL);
 #else
-        hd_pci=pci_find_device_reverse(0x1905,0x8100,NULL);
+        hd_pci=pci_find_device_reverse(pci_id_major,pci_id_minor,NULL);
 #endif
 #endif
         if (!hd_pci)
                 return -1;
 
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found PCI device 1905:8100\n")
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found PCI device %04x:%04x\n", pci_id_major, pci_id_minor)
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0))
 	// parts taken from https://stackoverflow.com/questions/35682482/how-to-access-pci-memory-from-linux-kernel-space-by-memory-mapping-kernel-3-14
 	// enabling the device
 	retval = pci_enable_device(hd_pci);
 	if(retval) {
-		hd_err("failed to enable PCI device 1905:8100\n");
+		hd_err("failed to enable PCI device %04x:%04x\n", pci_id_major, pci_id_minor);
 		return -1;
 	};
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "enabled PCI device successfully 1905:8100\n")
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "enabled PCI device %04x:%04x successfully\n", pci_id_major, pci_id_minor)
 
 	// take ownership of pci related regions
-	pci_request_regions(hd_pci, "bar1");
+	retval = pci_request_regions(hd_pci, "bar1");
+	if(retval) {
+		hd_err("failed to request PCI region 'bar1' on PCI device %04x:%04x\n", pci_id_major, pci_id_minor);
+		return -1;
+	};
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "request region 'bar1' on PCI device %04x:%04x successfully\n", pci_id_major, pci_id_minor)
 
 	// checking if PCI-device reachable by checking that BAR1 is defined and memory mapped
 	if( !(pci_resource_flags(hd_pci,1) & IORESOURCE_MEM) ) {
-		hd_err("incorrect BAR1 configuration of PCI device 1905:8100\n");
+		hd_err("incorrect BAR1 configuration of PCI device %04x:%04x\n", pci_id_major, pci_id_minor);
 		return(-ENODEV);
 	};
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found BAR1 configuration for PCI device 1905:8100")
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found BAR1 configuration for PCI device %04x:%04x\n", pci_id_major, pci_id_minor)
 #endif
 
         hdd.hd_pci=hd_pci;
 	hdd.bar1=(void*)pci_resource_start(hd_pci,1);
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found BAR1 address for PCI device 1905:8100 hdd.bar1=0x%lx\n", hdd.bar1)
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "found BAR1 address for PCI device %04x:%04x hdd.bar1=0x%llx\n", pci_id_major, pci_id_minor, (uint64_t) hdd.bar1)
         hdd.start_phys= hdd.bar1+0x02000000+MAP_START;
 /*      hdd.start=ioremap((long)hdd.start_phys,MAP_SIZE);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0))
@@ -213,7 +221,7 @@ int hdshm_init_struct_host(void)
                 return -1;
         }
          
-	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdd.start_phys=0x%lx hdd.start=%p (0x%lx) hd.start_nc=%p (0x%lx) addr64=%llx\n", hdd.start_phys, hdd.start, hdd.start, hdd.start_nc, hdd.start_nc, addr64);
+	hd_dbg(HD_DEBUG_BIT_MODULE_INIT, "hdd.start_phys=0x%llx hdd.start=%p hd.start_nc=%p addr64=0x%llx\n", (uint64_t) hdd.start_phys, hdd.start, hdd.start_nc, addr64);
 	sema_init(&hdd.table_sem,1);
         hdd.hd_root=hdd.start_nc;
         memset(hdd.start_nc, 0, MAP_SIZE);
@@ -414,12 +422,16 @@ int hdshm_create_area(struct hdshm_file *bsf, unsigned long arg)
 	bse->kernel=(int)hdshm_allocate_memory(&hdd, bsa.length, &bse->phys);
 #else
 	if (bsa.flags&HDSHM_MEM_HD)
-        	bse->kernel=(int)hdshm_allocate_memory(&hdd, bsa.length, &bse->phys);
+#ifndef __x86_64
+        	bse->kernel=(uint32_t)hdshm_allocate_memory(&hdd, bsa.length, &bse->phys);
+#else
+        	bse->kernel=(uint32_t) ((uint64_t) hdshm_allocate_memory(&hdd, bsa.length, &bse->phys) & 0xFFFFFFFF);
+#endif // __x86_64
         else
 #ifndef __x86_64
                 bse->kernel=pci_alloc_consistent (hdd.hd_pci, bsa.length, &bse->phys);
 #else
-                bse->kernel=pci_alloc_consistent (hdd.hd_pci, (size_t) bsa.length, (dma_addr_t) &bse->phys);
+                bse->kernel= (uint32_t) ((uint64_t) pci_alloc_consistent (hdd.hd_pci, (size_t) bsa.length, (void*) &bse->phys) & 0xFFFFFFFF);
 #endif // __x86_64
 #endif // CONFIG_MIPS
 
@@ -604,35 +616,35 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 #endif
 	struct hdshm_file *bsf=(struct hdshm_file*)file->private_data;
 
-	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with cmd=%x arg=%lx\n", cmd, arg)
+	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with cmd=%x arg=0x%lx\n", cmd, arg)
 
 	switch(cmd) {
 	case IOCTL_HDSHM_GET_AREA:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_AREA with arg=%lx\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_AREA with arg=0x%lx\n", arg)
 		ret=hdshm_get_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_SET_ID:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_SET_ID with arg=%lx\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_SET_ID with arg=0x%lx\n", arg)
 		ret=hdshm_set_id(bsf,arg);
 		break;
 	case IOCTL_HDSHM_CREATE_AREA:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_CREATE_AREA with arg=%lx\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_CREATE_AREA with arg=0x%lx\n", arg)
 		ret=hdshm_create_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_DESTROY_AREA:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_DESTROY_AREA with arg=%lx\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_DESTROY_AREA with arg=0x%lx\n", arg)
 		ret=hdshm_destroy_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_GET_STATUS:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_STATUS with arg=%lx\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_GET_STATUS with arg=0x%lx\n", arg)
 		ret=hdshm_get_status(bsf,arg);
 		break;
 	case IOCTL_HDSHM_RESET:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_RESET with arg=%lx\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_RESET with arg=0x%lx\n", arg)
 		ret=hdshm_reset(bsf,arg);
 		break;
 	case IOCTL_HDSHM_UNMAP_AREA:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_UNMAP_AREA with arg=%lx\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_UNMAP_AREA with arg=0x%lx\n", arg)
 		ret=hdshm_unmap_area(bsf,arg);
 		break;
 	case IOCTL_HDSHM_GET_ROOT:
@@ -648,15 +660,15 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	case IOCTL_HDSHM_PCIBAR1:
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_PCIBAR1 result hdd.bar1=%lx\n", hdd.bar1)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_PCIBAR1 result hdd.bar1=0x%lx\n", hdd.bar1)
 		return (int)hdd.bar1;  // HACK FIXME
 #else
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_PCIBAR1 result hdd.bar1=%lx\n", hdd.bar1)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_PCIBAR1 result hdd.bar1=0x%llx\n", (uint64_t) hdd.bar1)
 		return (long)hdd.bar1;  // HACK FIXME
 #endif
 		break;
 	case IOCTL_HDSHM_SHUTDOWN:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_SHUTDOWN with arg=%d\n", arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_SHUTDOWN with arg=0x%lx\n", arg)
 	        hdd.hd_root->booted=arg;
 	        break;
 #ifdef CONFIG_MIPS
@@ -669,7 +681,7 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
                 
 #endif        
 	default:
-		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with unsupported cmd=%d arg=%d\n", cmd, arg)
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "called with unsupported cmd=%d arg=0x%lx\n", cmd, arg)
 		break;
 	}
 	hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "hdd.hd_root->host_usage=%i hdd.hd_root->hd_usage=%i", hdd.hd_root->host_usage,hdd.hd_root->hd_usage)
@@ -712,7 +724,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 		hdshm_unlock_table();
 		return -ENOENT;		
 	}
-	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "mmap bse=%p user %x phys=%x size %x offset %x",
+	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "mmap bse=%p user 0x%x phys=0x%x size 0x%x offset 0x%x",
 	    bse,
 	    (int)vma->vm_start,
 	    (int)bse->phys,
@@ -762,7 +774,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 #ifndef __x86_64
 		phys_start = (dma_addr_t)(hdd.start_phys-MAP_START)+(bse->phys&~4095); // FIXME -MAP!
 #else
-                phys_start = (uint32_t) ((hdd.start_phys-MAP_START)+(bse->phys&~4095)) & 0xFFFFFFFF; // FIXME -MAP!
+                phys_start = (uint32_t) ( (uint64_t) ((hdd.start_phys-MAP_START)+(bse->phys&~4095)) & 0xFFFFFFFF); // FIXME -MAP!
 #endif
 	}
 	else {
@@ -776,7 +788,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 
 	length=vma->vm_end-vma->vm_start; 
 
-        hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "MAP PHYSICAL: %p, length %x\n",(void*)phys_start, length);
+        hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "MAP PHYSICAL: 0x%x, length 0x%x\n", phys_start, length);
         remap_pfn_range(vma, vma->vm_start, phys_start>>PAGE_SHIFT, length, vma->vm_page_prot);
         
 	bse->usage++;	

@@ -24,6 +24,7 @@
 
 static int has_fb = 0;
 module_param(has_fb, int, 0);
+module_param(hd_dbg_mask, hexint, 0);
 
 struct hde_fb {
 	struct fb_info fb_info; 
@@ -410,9 +411,9 @@ int dev_mmap(struct fb_info *info, struct vm_area_struct *vma) {
 		return -EINVAL; 
 	} // if
 #ifndef __x86_64
-	hd_fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %d (0x%x)", vma->vm_start, info->fix.smem_start, size, size);
+	hd_fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %u (0x%x)", vma->vm_start, info->fix.smem_start, size, size);
 #else
-	hd_fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %d (0x%lx)", vma->vm_start, info->fix.smem_start, size, size);
+	hd_fb_dbg("remap_pfn_range> 0x%lx, 0x%lx, %lu (0x%lx)", vma->vm_start, info->fix.smem_start, size, size);
 #endif
 	if(remap_pfn_range(vma, vma->vm_start, info->fix.smem_start >> PAGE_SHIFT, size, vma->vm_page_prot)) //pgprot_noncached(vma->vm_page_prot)))
 		return -EAGAIN;
@@ -458,7 +459,7 @@ static struct fb_ops hde_fb_fops = {
 
 int hdfb_init(void) {
 	int ret;
-	hd_fb_dbg("init has_fb=%d", has_fb);
+	hd_fb_dbg("init with has_fb=%d", has_fb);
 	if (!has_fb)
 		return 0;
 	ret = init_fb_info();
