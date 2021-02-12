@@ -17,10 +17,11 @@
 
 // debug
 //extern uint32_t hd_debug_mask;
-#define HD_DEBUG_BIT_MODULE_TODO	0x01000000
+#define HD_DEBUG_BIT_MODULE_TODO	0x00000001
 #define HD_DEBUG_BIT_MODULE_INIT	0x00010000
 #define HD_DEBUG_BIT_MODULE_EXIT	0x00020000
 #define HD_DEBUG_BIT_MODULE_IOCTL	0x00001000
+#define HD_DEBUG_BIT_MODULE_IOCTL2	0x10000000
 #define HD_DEBUG_BIT_MODULE_MMAP	0x00002000
 #define HD_DEBUG_BIT_MODULE_HDFB	0x00000100
 
@@ -57,6 +58,7 @@ typedef struct {
 #define IOCTL_HDSHM_SHUTDOWN     _IOWR('d', 0xb, int)
 #define IOCTL_HDSHM_DMA          _IOWR('d', 0xc, hdshm_dma_t*)
 #define IOCTL_HDSHM_CMDLINE      _IOR('d', 0xc, char[256]) // TODO check: has same 0xc as DMA ?!
+#define IOCTL_HDSHM_HDFBEXIT     _IOW('d', 0xe, int)
 #define IOCTL_HDSHM_DEBUG        _IOW('d', 0xf, int)
 
 #define HDSHM_MAGIC 0x47124321
