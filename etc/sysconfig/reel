@@ -32,7 +32,7 @@ HD_SHM_MODULE="extra/hdshm3/hdshm.ko"
 HD_SHM_OPTIONS="has_fb=1"
 
 ## eHD/boot image
-HD_BOOT_IMAGE="/path/to/linux.bin"
+HD_BOOT_IMAGE="/opt/reel/share/reel/eHD/linux-20170522-ua0lnjehd.bin"
 HD_BOOT_TIMEOUT="20"
 HD_BOOT_BIN="/opt/reel/sbin/hdboot"
 
