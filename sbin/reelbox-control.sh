@@ -704,6 +704,25 @@ SetupEhdKernel() {
 		return 1
 	fi
 
+	HD_SHM_DEVICE="/dev/hdshm"
+	if [ ! -e $HD_SHM_DEVICE ]; then
+		Syslog "ERROR" "setup of eHD/kernel misses device: $HD_SHM_DEVICE"
+		return 1
+	fi
+
+	HD_SHM_GROUP="${HD_SHM_GROUP:-video}"
+	chgrp $HD_SHM_GROUP $HD_SHM_DEVICE
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/kernel can't change group: $HD_SHM_DEVICE ($HD_SHM_GROUP)"
+		return 1
+	fi
+
+	chmod g+rw $HD_SHM_DEVICE
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/kernel can't adjust permissions to g+rw: $HD_SHM_DEVICE"
+		return 1
+	fi
+
 	Syslog "INFO" "setup of eHD/kernel module successfully loaded: $hdshm_module_file $HD_SHM_OPTIONS"
 }
 
@@ -853,6 +872,26 @@ SetupEhdNetwork() {
 	esac
 }
 
+
+## setup eHD control
+SetupEhdControl() {
+	if [ -z "$HD_CTRLD_BIN" ]; then
+		HD_CTRLD_BIN="/opt/reel/sbin/hdctrld"
+		Syslog "NOTICE" "setup of eHD/control uses default binary: $HD_CTRLD_BIN"
+	fi
+
+	if [ ! -x "$HD_CTRLD_BIN" ]; then
+		Syslog "ERROR" "setup of eHD/control requires executable: $HD_CTRLD_BIN"
+		return 1
+	fi
+
+	case $1 in
+	    *)
+		Syslog "NOTICE" "unsupported option: $1"
+		;;
+	esac
+}
+
 ## Basic checks
 if [ ! -x "$REELFPCTL" ]; then
 	Syslog "WARN" "No executable found: $REELFPCTL"
@@ -913,6 +952,9 @@ case $arg1 in
     setup_ehd_network)
 	SetupEhdNetwork $*
 	;;
+    setup_ehd_controlk)
+	SetupEhdControl $*
+	;;
     *)
 	cat <<END
 Supported arg1
@@ -946,6 +988,8 @@ Supported arg1
 		setup eHD boot image
 	setup_ehd_network start|stop|status
 		setup eHD network
+	setup_ehd_control start|stop|status
+		setup eHD control
 END
 	;;
 esac
