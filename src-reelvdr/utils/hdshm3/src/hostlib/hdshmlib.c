@@ -61,6 +61,7 @@ hdshm_area_t *hd_get_area(int id)
         return NULL;
 
     ioctl(hdfd, IOCTL_HDSHM_SET_ID, id);
+    dbg1("HOST: set_id %d\n", id);
 
     real_length = ((bah.physical & 4095) + bah.length + 4095) & ~4095;
 #if 0                           //ndef CONFIG_MIPS
@@ -85,11 +86,13 @@ hdshm_area_t *hd_get_area(int id)
     mapped = p + (bah.physical & 4095);
 #endif
 
-    if (p == (void *)-1)
+    if (p == (void *)-1) {
+        dbg1("HOST: p=%p is NOT valid\n", p);
         return NULL;
+    };
 
     printf
-        ("HOST: Mapped ID %x, phys %p to %p, rphys %p to virt %p, length %x, kernel_mem %p\n",
+        ("HOST: Mapped ID %x, phys %p to %p, rphys %p to virt %p, length 0x%x, kernel_mem %p\n",
          id, (void *)bah.physical, p, (void *)(bah.physical & ~4095), mapped, real_length,
          bah.kernel_mem);
     br = (hdshm_area_t *) calloc(1, sizeof(hdshm_area_t));
