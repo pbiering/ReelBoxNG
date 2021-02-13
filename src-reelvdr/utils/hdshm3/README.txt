@@ -12,6 +12,7 @@ $ rpmbuild -bb contrib/hdshm3.spec
 $ pushd x86
 $ tar cfzh ~/rpmbuild/SOURCES/reelbox-hdshm3-src.tar.gz driver
 $ popd
+$ cp contrib/hdshm3-kmod.spec ~/rpmbuild/SPECS	#required for akmods RPM build
 $ rpmbuild -bb contrib/hdshm3-kmod.spec
 
 
