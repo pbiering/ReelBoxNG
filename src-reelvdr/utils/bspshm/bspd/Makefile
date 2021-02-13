@@ -1,5 +1,7 @@
-LDFLAGS  = -m32 -lpthread -lm
-CXXFLAGS  ?= -O2 -m32 -Wall
+#LDFLAGS  = -m32 -lpthread -lm
+#CXXFLAGS  ?= -O2 -m32 -Wall
+LDFLAGS  = -lpthread -lm
+CXXFLAGS  ?= -O2 -Wall
 DEFINES  = -D__LINUX__ 
 INCLUDES = -I../include
 
