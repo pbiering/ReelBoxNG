@@ -88,13 +88,13 @@ bspshm_area_t* bsp_get_area(int id)
 //---------------------------------------------------------------------------
 void bsp_unmap_area(bspshm_area_t *handle)
 {
-	int ret;
+	// int ret; // FIXED: warning: variable 'ret' set but not used
 	if (!handle || !handle->mapped)
 		return;
 	dbg("unmap  %p, length %x\n",handle->real_mapped,handle->real_length);
 	munmap(handle->real_mapped,handle->real_length);
 	dbg1("ioctl unmap\n");
-	ret=ioctl(bspfd,IOCTL_BSPSHM_UNMAP_AREA,handle->id);
+	/*ret=*/ioctl(bspfd,IOCTL_BSPSHM_UNMAP_AREA,handle->id); // FIXED: warning: variable 'ret' set but not used
 	handle->mapped=NULL;
 }
 //---------------------------------------------------------------------------
@@ -112,10 +112,10 @@ void bsp_free_area(bspshm_area_t *handle)
 */
 int bsp_check_area(bspshm_area_t *bah)
 {
-	int ret;
+	// int ret; // FIXED: warning: variable 'ret' set but not used
 	bspshm_area_t bah1;
 
-	ret=ioctl(bspfd,IOCTL_BSPSHM_GET_AREA,&bah1);
+	/*ret=*/ioctl(bspfd,IOCTL_BSPSHM_GET_AREA,&bah1); // FIXED: warning: variable 'ret' set but not used
 	
 	if (bah->physical!=bah1.physical || bah->length!=bah1.length) {
 //		FIXME

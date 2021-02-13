@@ -201,10 +201,10 @@ bsp_channel_t *bsp_channel_open(int channel)
 //---------------------------------------------------------------------------
 void bsp_channel_free_areas(bsp_channel_t *handle)
 {
-	int n,areas;
+	int n /*,areas*/; // FIXED: variable 'areas' set but not used
 	bsp_channel_control_t *bcc;
 	bcc=(bsp_channel_control_t*)handle->control_area;
-	areas=bcc->used_areas;
+	// areas=bcc->used_areas; // FIXED: variable 'areas' set but not used
 	if (handle->creator)
 		bcc->state=0;
 	printf("bsp_channel_free_areas: used areas %i\n",bcc->used_areas); // FIXME BUG!!!
