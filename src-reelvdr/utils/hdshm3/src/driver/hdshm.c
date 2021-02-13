@@ -850,7 +850,7 @@ static struct class *hdshm_class;
 static int __init hdshm_init(void) 
 {
         int retval;
-	hd_inf("init start with hd_dbg_mask=0x%08x\n", hd_dbg_mask)
+	hd_inf("init start with hd_dbg_mask=0x%08x (version: %s)", hd_dbg_mask, VERSION)
 #ifdef IS_HD        
 	retval=hdshm_init_struct_hd();
 #else
@@ -904,7 +904,7 @@ static int __init hdshm_init(void)
 static void __exit hdshm_exit(void)
 {
 	int n;
-	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "exit start\n")
+	hd_inf("exit start\n")
 #ifdef HAS_HD_FB
 	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "call hdfb_exit\n")
 	hdfb_exit();
@@ -948,7 +948,7 @@ static void __exit hdshm_exit(void)
 	pci_release_regions(hdd.hd_pci);
 #endif
 
-	hd_dbg(HD_DEBUG_BIT_MODULE_EXIT, "exit finished\n")
+	hd_inf("exit finished without problems\n")
 }
                                 
 module_init(hdshm_init);
