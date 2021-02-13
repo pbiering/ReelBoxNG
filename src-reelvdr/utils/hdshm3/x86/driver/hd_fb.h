@@ -6,10 +6,12 @@
 
 //#define hd_fb_dbg(format, arg...) printk(FB_DEVICE_NAME ": "format"\n", ## arg)
 //#define hd_fb_dbg(format, arg...)
-#define hd_fb_err(format, arg...) printk(FB_DEVICE_NAME ": "format"\n", ## arg)
+//#define hd_fb_err(format, arg...) printk(FB_DEVICE_NAME ": "format"\n", ## arg)
 
 #ifdef HD_DEBUG_BIT_MODULE_HDFB
 #define hd_fb_dbg(format, arg...) hd_dbg(HD_DEBUG_BIT_MODULE_HDFB, format, ## arg)
+#define hd_fb_inf(format, arg...) hd_inf(format, ## arg)
+#define hd_fb_err(format, arg...) hd_err(format, ## arg)
 #endif
 
 #define MAX_PALETTE_NUM_ENTRIES         256
@@ -24,11 +26,9 @@
 
 static int has_fb = 0;
 module_param(has_fb, int, 0);
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)) // TODO: check when "hexint" was introduced
+MODULE_PARM_DESC(has_fb, "enable framebuffer interface");
 module_param(hd_dbg_mask, hexint, 0);
-#else
-module_param(hd_dbg_mask, int, 0);
-#endif
+MODULE_PARM_DESC(hd_dbg_mask, "set debug mask for module in hexint format 0x......");
 
 struct hde_fb {
 	struct fb_info fb_info; 
@@ -463,7 +463,7 @@ static struct fb_ops hde_fb_fops = {
 
 int hdfb_init(void) {
 	int ret;
-	hd_fb_dbg("init with has_fb=%d", has_fb);
+	hd_fb_inf("init with has_fb=%d", has_fb);
 	if (!has_fb)
 		return 0;
 	ret = init_fb_info();
@@ -479,16 +479,21 @@ int hdfb_init(void) {
 		hd_fb_err("Unable to register framebuffer: %d", ret);
 		return -EINVAL;
 	} // if
+	hd_fb_inf("init with has_fb=%d successful", has_fb);
 	return ret;
 } // hdfb_init
 
 void hdfb_exit(void) {
 	static int flag_already_called = 0;
 
-	hd_fb_dbg("exit has_fb=%d", has_fb);
+	hd_fb_inf("exit has_fb=%d", has_fb);
 	if (!has_fb)
 		return;
-	if (flag_already_called == 0)
+	if (flag_already_called == 0) {
+		hd_fb_dbg("call unregister_framebuffer");
 		unregister_framebuffer(&hdefb.fb_info);
+	} else {
+		hd_fb_dbg("unregister_framebuffer already called earlier");
+	};
 	flag_already_called = 1;
 } // hdfb_exit
