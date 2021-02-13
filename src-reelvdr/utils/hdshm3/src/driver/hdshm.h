@@ -15,6 +15,9 @@
 #define __x86_64
 #endif
 
+// version
+#define VERSION		3.0.0.2021
+
 // debug
 //extern uint32_t hd_debug_mask;
 #define HD_DEBUG_BIT_MODULE_TODO	0x00000001
