@@ -34,12 +34,12 @@ struct osd_s
 typedef struct osd_s osd_t;
 
 osd_t *osd;
+char fb[256]="";
 
 void print_usage(void) {
-   puts("ppmtofb: Displays PPM-pics on the framebuffer");
-   puts("Usage: ppmtofb <filename>");
-   puts("PPM pic has to be in plain-format and may only have max. 255 colours per channel");
-  
+   printf("ppmtofb: Displays PPM-pics on the framebuffer\n");
+   printf("Usage: ppmtofb [-f <framebuffer device>] -p <picture filename>\n");
+   printf("PPM pic has to be in plain-format and may only have max. 255 colours per channel\n");
 }
 
 osd_t *new_osd(void) {
@@ -50,11 +50,12 @@ osd_t *new_osd(void) {
        abort();
     }
 
-    osd->fd = open("/dev/fb0", O_RDWR|O_NDELAY);
+    osd->fd = open(fb, O_RDWR|O_NDELAY);
 
-    if(osd->fd==-1)
-       printf("couldn't open /dev/fb0, error: %s\n", strerror(errno));
-    assert(osd->fd!=-1);
+    if(osd->fd==-1) {
+       printf("couldn't open %s, error: %s\n", fb, strerror(errno));
+		 return NULL;
+	 };
     struct fb_var_screeninfo screeninfo;
     ioctl(osd->fd, FBIOGET_VSCREENINFO, &screeninfo);
 
@@ -82,23 +83,45 @@ osd_t *new_osd(void) {
 int main(int argc, char** argv){
    char *buf = (char*)malloc(64);
    int w,h;
-   
-   if(argc != 2){
-      print_usage(); 
-      abort();
-   }
+	int i;
+   char pict[16384]="";
+
+   while ((i = getopt(argc, argv, "f:p:h?")) != -1) {
+      switch(i) {
+         case 'f':
+				snprintf(fb, sizeof(fb), "%s", optarg);
+				printf("INFO : given framebuffer device: %s\n", fb);
+				break;
+         case 'p':
+				snprintf(pict, sizeof(pict), "%s", optarg);
+				printf("INFO : given picture file: %s\n", pict);
+				break;
+         case '?':
+         case 'h':
+         default:
+				print_usage();
+				exit(1);
+				break;
+      };
+   };
+
+	if (strlen(pict) == 0) {
+      printf("ERROR: no picture file given\n");
+		print_usage();
+		exit(1);
+	};
 
    FILE *fd;
-   if(strcmp(argv[1], "-")){
-     fd = fopen(argv[1], "r");
+   if(strcmp(pict, "-")){
+     fd = fopen(pict, "r");
    } else
      fd = stdin; 
   
-   printf("opening: %s\n", argv[1]);
+   printf("opening: %s\n", pict);
 
    if(fd==NULL){
-      printf("ERROR: couldn't open %s\n", argv[1]);
-      abort();
+      printf("ERROR: couldn't open %s\n", pict);
+		exit(1);
    }
 
   do {
@@ -107,8 +130,8 @@ int main(int argc, char** argv){
   } while (buf[0]=='#');
 
   if (strcmp(buf,"P6\n")) {
-    printf("ERROR: pic %s isn't a PPM in P6 format\n",argv[1]);
-    abort();
+    printf("ERROR: pic %s isn't a PPM in P6 format\n",pict);
+	 exit(1);
   }
 
   do {
@@ -117,11 +140,15 @@ int main(int argc, char** argv){
   } while (buf[0]=='#');
           
   osd = new_osd();
+  if (osd == NULL) {
+    printf("ERROR: can't open OSD\n");
+	 exit(1);
+  };
              
   sscanf(buf,"%i %i",&w,&h);
   if (w!=osd->width || h!=osd->height) {
     printf("ERROR: size mismatch, framebuffer %ix%i, pic %ix%i\n",osd->width,osd->height,w,h);
-    abort();
+    exit(1);
   }
   
   do {
@@ -155,3 +182,4 @@ int main(int argc, char** argv){
    return 0;
 }
 
+/* vim: set tabstop=3 shiftwidth=3 noexpandtab: */
