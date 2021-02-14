@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 			exit(0);
 		while (1)
 		{
-			char c = getopt(argc, argv, "ida:fcF");
+			char c = getopt(argc, argv, "ida:fcFh?");
 			if (c == -1)
 				break;
 			switch(c) {
@@ -77,6 +77,8 @@ int main(int argc, char **argv)
 					hdd->plane[2].ws=-1;
 				changed++;
 				break;
+			case '?':
+			case 'h':
 			default:
 				usage();
 				exit(0);
