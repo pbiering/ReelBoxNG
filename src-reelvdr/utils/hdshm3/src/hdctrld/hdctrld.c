@@ -270,9 +270,9 @@ int main(int argc, char** argv)
 	while (1)
         {
 #ifdef CONFIG_MIPS
-		char c = getopt(argc, argv, "dskv:o:a:O:p:M:A:V:X:PB:C:G:D:?");
+		char c = getopt(argc, argv, "dskv:o:a:O:p:M:A:V:X:PB:C:G:D:?h");
 #else
-		char c = getopt(argc, argv, "skv:o:a:O:p:M:A:V:X:PB:C:G:D:?");
+		char c = getopt(argc, argv, "skv:o:a:O:p:M:A:V:X:PB:C:G:D:?h");
 #endif
 		if (c == -1)
                         break;
@@ -337,6 +337,8 @@ int main(int argc, char** argv)
 		case 'D':
 			deint=atoi(optarg)&255;
 			break;
+		case '?':
+		case 'h':
 		default:
 			usage();
 		}
