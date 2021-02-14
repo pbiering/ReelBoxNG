@@ -245,7 +245,7 @@ void usage(void)
 		"         -G <gamma>       0-255 (0-2.55)\n"
 		"         -D <deinterlacer> 0,1\n"
 		"\nAllowed video modes:\n"
-		"    1080p, 1080i, 1080i50, 720p, 720p50\n"
+		"    1080p, 1080i, 1080p50, 1080i50, 720p, 720p50\n"
 		"    576p, 576i, 480p, 480i, off\n"
 		"Aspect modes: Wide/Normal+Fill/Scale/Crop\n"
 		"Analog modes: AUTO, YUV, RGB, YC\n"
@@ -355,7 +355,9 @@ int main(int argc, char** argv)
 		hdd->hd_shutdown=powerdown;
 
 	if (strlen(vm) || strlen(dm) || strlen(am)|| strlen(anm)|| strlen(pm) || strlen(dam)) {
-//		printf("SET <%s> <%s> <%s>\n",vm,dm,am);
+#ifndef CONFIG_MIPS
+		printf("SET vm='%s' dm='%s' am='%s'\n",vm,dm,am);
+#endif
 		set_video_from_string(vm,dm,am,anm,pm,dam);
 	}
 

@@ -647,6 +647,12 @@ void set_video_from_string(char *vm, char* dv, char* asp, char * analog_mode, ch
 		i=1;
 		fps=60;
 	}
+	else if (!strcasecmp(vm,"1080p50")) {
+		w=1920;
+		h=1080;
+		i=0;
+		fps=50;
+	}
 	else if (!strcasecmp(vm,"1080i50")) {
 		w=1920;
 		h=1080;
