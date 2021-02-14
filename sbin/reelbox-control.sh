@@ -18,6 +18,7 @@
 # 20210131/pbev: honor global BCONTROL and add option for brightness to set_led_button, use BCOLOR for "on"
 # 20210201/pbev: keep (defined) button LED brightness on status LED change
 # 20210212/pbev: add support for eHD (kernel/boot/network)
+# 20210214/pbev: add support for eHD boot "reboot"
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -962,7 +963,14 @@ case $arg1 in
 	SetupEhdKernel $*
 	;;
     setup_ehd_boot)
-	SetupEhdBoot $*
+	case $1 in
+	    reboot)
+		SetupEhdNetwork stop && SetupEhdBoot && SetupEhdNetwork start
+		;;
+	    *)
+		SetupEhdBoot $*
+		;;
+	esac
 	;;
     setup_ehd_network)
 	SetupEhdNetwork $*
@@ -998,12 +1006,12 @@ Supported arg1
 	set_led_button <color>|off|on [<brightness 1-15>|max]
 		set color of button LEDs
 	setup_ehd_kernel
-		setup eHD loading kernel module
-	setup_ehd_boot
-		setup eHD boot image
+		setup eHD load kernel module
+	setup_ehd_boot [reboot]
+		setup eHD load boot image (reboot includes network stop/start)
 	setup_ehd_network start|stop|status
-		setup eHD network
-	setup_ehd_control start|stop|status
+		setup eHD network action
+	setup_ehd_control
 		setup eHD control
 END
 	;;
