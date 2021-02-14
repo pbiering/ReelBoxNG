@@ -370,7 +370,7 @@ int main(int argc, char ** argv)
 	int retval;
 	uint32_t hd_dbg_mask;
 
-	while ((i = getopt(argc, argv, "c:e:i:p:rvw:MD:E")) != -1) {
+	while ((i = getopt(argc, argv, "c:e:i:p:rvw:MD:Eh?")) != -1) {
 		switch (i) 
 		{
 		case 'c':
@@ -424,6 +424,8 @@ int main(int argc, char ** argv)
 		case 'M':
 			no_mtrr=1;
 			break;
+		case '?':
+		case 'h':
 		default:
 			usage();
 			break;
