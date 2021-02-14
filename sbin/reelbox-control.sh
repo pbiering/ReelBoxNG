@@ -681,6 +681,11 @@ StopRemote() {
 
 ## setup eHD Kernel
 SetupEhdKernel() {
+	if [ "$HD_SHM" != "yes" ]; then
+		Syslog "ERROR" "setup of eHD is not enabled: HD_SHM=$HD_SHM (requires 'yes')"
+		return 0
+	fi
+
 	if [ -z "$HD_SHM_MODULE" ]; then
 		Syslog "ERROR" "setup of eHD/kernel requires HD_SHM_MODULE set"
 		return 1
@@ -728,6 +733,11 @@ SetupEhdKernel() {
 
 ## setup eHD Boot
 SetupEhdBoot() {
+	if [ "$HD_SHM" != "yes" ]; then
+		Syslog "ERROR" "setup of eHD is not enabled: HD_SHM=$HD_SHM (requires 'yes')"
+		return 0
+	fi
+
 	if [ -z "$HD_BOOT_IMAGE" ]; then
 		Syslog "ERROR" "setup of eHD/boot requires defined HD_BOOT_IMAGE"
 		return 1
@@ -766,7 +776,12 @@ SetupEhdBoot() {
 
 ## setup eHD network
 SetupEhdNetwork() {
-	HD_NETD_IP_EHD="192.168.99.129" # hardcoded in image
+	if [ "$HD_SHM" != "yes" ]; then
+		Syslog "ERROR" "setup of eHD is not enabled: HD_SHM=$HD_SHM (requires 'yes')"
+		return 0
+	fi
+
+	HD_NETD_IP_EHD="192.168.99.129" # hardcoded in eHD boot image
 
 	if [ -z "$HD_NETD_BIN" ]; then
 		HD_NETD_BIN="/opt/reel/sbin/shmnetd"

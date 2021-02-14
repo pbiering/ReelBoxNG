@@ -27,6 +27,9 @@ GRAPHLCDIMAGEPREFIX="image-128x64-easyvdr-"
 
 ### eHD
 
+## eHD enable
+HD_SHM="yes"
+
 ## eHD/kernel module
 HD_SHM_MODULE="extra/hdshm3/hdshm.ko"
 HD_SHM_OPTIONS="has_fb=1"
