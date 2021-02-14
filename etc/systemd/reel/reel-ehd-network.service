@@ -1,0 +1,26 @@
+[Unit]
+Description=ReelBoxNG eHD network daemon
+
+ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
+ConditionFileNotEmpty=/etc/sysconfig/reel
+ConditionFileNotEmpty=/var/lib/tftpboot/hdplayer/hdplayer
+
+After=network.target reel-frontpanel.service reel-ehd-boot.service
+Before=vdr.service
+Requires=reel-ehd-boot.service tftp.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-eHD-network-daemon
+
+EnvironmentFile=/etc/sysconfig/reel
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/reelbox-control.sh setup_ehd_network start
+ExecStop=/opt/reel/sbin/reelbox-control.sh setup_ehd_network stop
+
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+[Unit]
+Description=ReelBoxNG eHD image boot
+
+ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
+ConditionFileNotEmpty=/etc/sysconfig/reel
+
+After=reel-frontpanel.service reel-ehd-kernel.service
+Before=vdr.service
+Requires=reel-ehd-kernel.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-eHD-image-boot
+
+EnvironmentFile=/etc/sysconfig/reel
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/reelbox-control.sh setup_ehd_boot
+
+
+[Install]
+WantedBy=multi-user.target
