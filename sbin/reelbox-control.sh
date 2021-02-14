@@ -900,6 +900,47 @@ CommandEhd() {
 	echo -e "\n$*\n" | nc -i 3 -d 0.2 -t $HD_NETD_IP_EHD 23
 }
 
+
+## display picture on eHD
+PictureEhd() {
+	if [ -z "$1" ]; then
+		Syslog "ERROR" "picture required"
+		return 1
+	fi
+
+	if [ ! -e "$1" ]; then
+		Syslog "ERROR" "picture not existing: $1"
+		return 1
+	fi
+
+	if [ -z "$HD_PPMTOFB" ]; then
+		HD_PPMTOFB="/opt/reel/sbin/ppmtofb"
+		Syslog "NOTICE" "picture display on eHD uses default binary: $HD_PPMTOFB"
+	fi
+
+	if [ ! -x "$HD_PPMTOFB" ]; then
+		Syslog "ERROR" "picture display on eHD requires executable: $HD_PPMTOFB"
+		return 1
+	fi
+
+	local fbdev="$(awk '$2 == "hde_fb" { print "/dev/fb" $1 }' /proc/fb)"
+
+	if [ -z "$fbdev" ]; then
+		Syslog "ERROR" "can't find eHD framebuffer device"
+		return 1
+	fi
+
+	$HD_PPMTOFB -f $fbdev -p "$1"
+	rc=$?
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "picture display on eHD failed: $1"
+		return 1
+	fi
+
+	Syslog "INFO" "picture display on eHD successfully: $1"
+}
+
+
 ## Basic checks
 if [ ! -x "$REELFPCTL" ]; then
 	Syslog "WARN" "No executable found: $REELFPCTL"
@@ -970,6 +1011,9 @@ case $arg1 in
     command_ehd)
 	CommandEhd $*
 	;;
+    picture_ehd)
+	PictureEhd $*
+	;;
     *)
 	cat <<END
 Supported arg1
@@ -1005,6 +1049,8 @@ Supported arg1
 		setup eHD network action
 	command_ehd <command>
 		send command to eHD
+	picture_ehd <picture>
+		display picture on eHD OSD
 END
 	;;
 esac

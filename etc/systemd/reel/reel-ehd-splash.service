@@ -1,0 +1,22 @@
+[Unit]
+Description=ReelBoxNG eHD splash picture
+
+ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
+ConditionFileNotEmpty=/opt/reel/share/reel/ReelBoxNG-720x576.pnm
+
+After=network.target reel-frontpanel.service reel-ehd-network.service
+Before=vdr.service
+Requires=reel-ehd-network.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-eHD-splash
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/reelbox-control.sh picture_ehd /opt/reel/share/reel/ReelBoxNG-720x576.pnm
+
+
+[Install]
+WantedBy=multi-user.target
