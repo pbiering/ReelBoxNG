@@ -19,6 +19,7 @@
 # 20210201/pbev: keep (defined) button LED brightness on status LED change
 # 20210212/pbev: add support for eHD (kernel/boot/network)
 # 20210214/pbev: add support for eHD boot "reboot"
+# 20210214/pbev: add support for eHD command
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -38,6 +39,10 @@ ALL_LED=15
 NOCLOCK=0
 CLOCK=1
 BLACKDISP=${BLACKDISP:-no}
+
+# ReelBox eHD
+HD_NETD_IP_EHD="192.168.99.129" # hardcoded in eHD boot image
+
 
 # set brightness depending on display
 if [ "$BLACKDISP" = "yes" ] ; then
@@ -782,8 +787,6 @@ SetupEhdNetwork() {
 		return 0
 	fi
 
-	HD_NETD_IP_EHD="192.168.99.129" # hardcoded in eHD boot image
-
 	if [ -z "$HD_NETD_BIN" ]; then
 		HD_NETD_BIN="/opt/reel/sbin/shmnetd"
 		Syslog "NOTICE" "setup of eHD/network uses default binary: $HD_NETD_BIN"
@@ -869,7 +872,7 @@ SetupEhdNetwork() {
 		fi
 
 		# eHD pingable
-		if ! ping -c 1 $HD_NETD_IP_EHD; then
+		if ! ping -c 1 $HD_NETD_IP_EHD >/dev/null; then
 			Syslog "WARN" "can't reach eHD: $HD_NETD_IP_EHD"
 			return 1
 		fi
@@ -889,23 +892,12 @@ SetupEhdNetwork() {
 }
 
 
-## setup eHD control
-SetupEhdControl() {
-	if [ -z "$HD_CTRLD_BIN" ]; then
-		HD_CTRLD_BIN="/opt/reel/sbin/hdctrld"
-		Syslog "NOTICE" "setup of eHD/control uses default binary: $HD_CTRLD_BIN"
-	fi
+## command eHD
+CommandEhd() {
+	SetupEhdNetwork status || return 1
 
-	if [ ! -x "$HD_CTRLD_BIN" ]; then
-		Syslog "ERROR" "setup of eHD/control requires executable: $HD_CTRLD_BIN"
-		return 1
-	fi
-
-	case $1 in
-	    *)
-		Syslog "NOTICE" "unsupported option: $1"
-		;;
-	esac
+	Syslog "INFO" "execute eHD command: $*"
+	echo -e "\n$*\n" | nc -i 3 -d 0.2 -t $HD_NETD_IP_EHD 23
 }
 
 ## Basic checks
@@ -975,8 +967,8 @@ case $arg1 in
     setup_ehd_network)
 	SetupEhdNetwork $*
 	;;
-    setup_ehd_controlk)
-	SetupEhdControl $*
+    command_ehd)
+	CommandEhd $*
 	;;
     *)
 	cat <<END
@@ -1011,8 +1003,8 @@ Supported arg1
 		setup eHD load boot image (reboot includes network stop/start)
 	setup_ehd_network start|stop|status
 		setup eHD network action
-	setup_ehd_control
-		setup eHD control
+	command_ehd <command>
+		send command to eHD
 END
 	;;
 esac
