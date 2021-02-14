@@ -16,7 +16,7 @@
 #endif
 
 // version
-#define VERSION		"3.0.0.2021"
+#define HD_HSHM_VERSION		"3.0.0.2021"
 
 // debug
 //extern uint32_t hd_debug_mask;

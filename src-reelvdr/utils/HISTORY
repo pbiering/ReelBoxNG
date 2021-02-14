@@ -1,0 +1,2 @@
+20210213/pbiering:
+- apply several fixed to hdshm3 to get it compiled on 64-bit

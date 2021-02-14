@@ -850,7 +850,7 @@ static struct class *hdshm_class;
 static int __init hdshm_init(void) 
 {
         int retval;
-	hd_inf("init start with hd_dbg_mask=0x%08x (version: %s)", hd_dbg_mask, VERSION)
+	hd_inf("init start with hd_dbg_mask=0x%08x (version: %s)", hd_dbg_mask, HD_HSHM_VERSION)
 #ifdef IS_HD        
 	retval=hdshm_init_struct_hd();
 #else
