@@ -17,6 +17,9 @@
 # 20210128/pbev: optional read of confing /etc/sysconfig/reel
 # 20210131/pbev: honor global BCONTROL and add option for brightness to set_led_button, use BCOLOR for "on"
 # 20210201/pbev: keep (defined) button LED brightness on status LED change
+# 20210212/pbev: add support for eHD (kernel/boot/network)
+# 20210214/pbev: add support for eHD boot "reboot"
+# 20210214/pbev: add support for eHD command
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -36,6 +39,10 @@ ALL_LED=15
 NOCLOCK=0
 CLOCK=1
 BLACKDISP=${BLACKDISP:-no}
+
+# ReelBox eHD
+HD_NETD_IP_EHD="192.168.99.129" # hardcoded in eHD boot image
+
 
 # set brightness depending on display
 if [ "$BLACKDISP" = "yes" ] ; then
@@ -678,6 +685,261 @@ StopRemote() {
 	return 0
 }
 
+## setup eHD Kernel
+SetupEhdKernel() {
+	if [ "$HD_SHM" != "yes" ]; then
+		Syslog "ERROR" "setup of eHD is not enabled: HD_SHM=$HD_SHM (requires 'yes')"
+		return 0
+	fi
+
+	if [ -z "$HD_SHM_MODULE" ]; then
+		Syslog "ERROR" "setup of eHD/kernel requires HD_SHM_MODULE set"
+		return 1
+	fi
+
+	if [ -z "$HD_SHM_OPTIONS" ]; then
+		Syslog "ERROR" "setup of eHD/kernel requires HD_SHM_OPTIONS set"
+		return 1
+	fi
+
+	local hdshm_module_file="/lib/modules/$(uname -r)/$HD_SHM_MODULE"
+	if [ ! -e "$hdshm_module_file" ]; then
+		Syslog "ERROR" "setup of eHD/kernel requires module: $hdshm_module_file"
+		return 1
+	fi
+
+	insmod $hdshm_module_file $HD_SHM_OPTIONS
+	rc=$?
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/kernel can't load module: $hdshm_module_file $HD_SHM_OPTIONS"
+		return 1
+	fi
+
+	HD_SHM_DEVICE="/dev/hdshm"
+	if [ ! -e $HD_SHM_DEVICE ]; then
+		Syslog "ERROR" "setup of eHD/kernel misses device: $HD_SHM_DEVICE"
+		return 1
+	fi
+
+	HD_SHM_GROUP="${HD_SHM_GROUP:-video}"
+	chgrp $HD_SHM_GROUP $HD_SHM_DEVICE
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/kernel can't change group: $HD_SHM_DEVICE ($HD_SHM_GROUP)"
+		return 1
+	fi
+
+	chmod g+rw $HD_SHM_DEVICE
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/kernel can't adjust permissions to g+rw: $HD_SHM_DEVICE"
+		return 1
+	fi
+
+	Syslog "INFO" "setup of eHD/kernel module successfully loaded: $hdshm_module_file $HD_SHM_OPTIONS"
+}
+
+## setup eHD Boot
+SetupEhdBoot() {
+	if [ "$HD_SHM" != "yes" ]; then
+		Syslog "ERROR" "setup of eHD is not enabled: HD_SHM=$HD_SHM (requires 'yes')"
+		return 0
+	fi
+
+	if [ -z "$HD_BOOT_IMAGE" ]; then
+		Syslog "ERROR" "setup of eHD/boot requires defined HD_BOOT_IMAGE"
+		return 1
+	fi
+
+	if [ ! -e "$HD_BOOT_IMAGE" ]; then
+		Syslog "ERROR" "setup of eHD/boot requires image: $HD_BOOT_IMAGE"
+		return 1
+	fi
+
+	if [ -z "$HD_BOOT_TIMEOUT" ]; then
+		HD_BOOT_TIMEOUT=20
+		Syslog "NOTICE" "setup of eHD/boot uses default timeout: $HD_BOOT_TIMEOUT"
+	fi
+
+	if [ -z "$HD_BOOT_BIN" ]; then
+		HD_BOOT_BIN="/opt/reel/sbin/hdboot"
+		Syslog "NOTICE" "setup of eHD/boot uses default binary: $HD_BOOT_BIN"
+	fi
+
+	if [ ! -x "$HD_BOOT_BIN" ]; then
+		Syslog "ERROR" "setup of eHD/boot requires executable: $HD_BOOT_BIN"
+		return 1
+	fi
+
+	$HD_BOOT_BIN -r -w $HD_BOOT_TIMEOUT -i $HD_BOOT_IMAGE
+	rc=$?
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "setup of eHD/boot can't load image: $HD_BOOT_IMAGE"
+		return 1
+	fi
+
+	Syslog "INFO" "setup of eHD/boot successfully loaded image: $HD_BOOT_IMAGE"
+}
+
+
+## setup eHD network
+SetupEhdNetwork() {
+	if [ "$HD_SHM" != "yes" ]; then
+		Syslog "ERROR" "setup of eHD is not enabled: HD_SHM=$HD_SHM (requires 'yes')"
+		return 0
+	fi
+
+	if [ -z "$HD_NETD_BIN" ]; then
+		HD_NETD_BIN="/opt/reel/sbin/shmnetd"
+		Syslog "NOTICE" "setup of eHD/network uses default binary: $HD_NETD_BIN"
+	fi
+
+	if [ ! -x "$HD_NETD_BIN" ]; then
+		Syslog "ERROR" "setup of eHD/network requires executable: $HD_NETD_BIN"
+		return 1
+	fi
+
+	if [ -z "$HD_NETD_TIMEOUT" ]; then
+		HD_NETD_TIMEOUT=10
+		Syslog "NOTICE" "setup of eHD/network uses default timeout: $HD_NETD_TIMEOUT"
+	fi
+
+	case $1 in
+	    stop)
+		local pid=$(pidof $(basename $HD_NETD_BIN))
+		if [ -n "$pid" ]; then
+			Syslog "NOTICE" "kill on request 'stop' running: $HD_NETD_BIN (pid=$pid)"
+			kill $pid
+		fi
+		return 0
+		;;
+
+	    start)
+		$HD_NETD_BIN &
+		local pid=$!
+
+		local i=$HD_NETD_TIMEOUT
+
+		# check whether daemon has started successfully
+		while [ $i -gt 0 ]; do
+			sleep 1
+			i=$[ $i - 1 ]
+			# daemon still running?
+			if ! ps --no-headers -p $pid >/dev/null; then
+				Syslog "ERROR" "setup of eHD/network failed, daemon no longer running: $HD_NETD_BIN"
+				return 1
+			fi
+
+			# tun interface active?
+			if ! ip -o link show dev tun0 >/dev/null; then
+				continue
+			fi
+
+			# tun IPv4 active?
+			if ! ip -o -4 addr show dev tun0 >/dev/null; then
+				continue
+			fi
+
+			# eHD pingable
+			if ! ping -q -c 1 $HD_NETD_IP_EHD >/dev/null; then
+				continue
+			fi
+
+			# eHD reachable via telnet
+			local output=$(echo "exit" | nc -d 0.2 -t $HD_NETD_IP_EHD 23)
+			if ! echo "$output" | grep -q "extensionHD"; then
+				continue
+			fi
+
+			break
+		done
+
+		if [ $i -eq 0 ]; then
+			Syslog "ERROR" "setup of eHD/network can't reach eHD"
+			if ps --no-headers -p $pid >/dev/null; then
+				Syslog "NOTICE" "kill running but not working: $HD_NETD_BIN"
+				kill $pid
+			fi
+			return 1
+		fi
+
+		Syslog "INFO" "setup of eHD/network successfully working, eHD reachable: $HD_NETD_IP_EHD"
+		;;
+
+	    status)
+		local pid=$(pidof $(basename $HD_NETD_BIN))
+		if [ -z "$pid" ]; then
+			Syslog "WARN" "process not running: $HD_NETD_BIN"
+			return 1
+		fi
+
+		# eHD pingable
+		if ! ping -c 1 $HD_NETD_IP_EHD >/dev/null; then
+			Syslog "WARN" "can't reach eHD: $HD_NETD_IP_EHD"
+			return 1
+		fi
+
+		# eHD reachable via telnet
+		local output=$(echo "exit" | nc -d 0.2 -t $HD_NETD_IP_EHD 23)
+		if ! echo "$output" | grep -q "extensionHD"; then
+			Syslog "WARN" "can reach eHD via telnet but output is not expected: $HD_NETD_IP_EHD ($output)"
+			return 1
+		fi
+		;;
+
+	    *)
+		Syslog "NOTICE" "unsupported option: $1"
+		;;
+	esac
+}
+
+
+## command eHD
+CommandEhd() {
+	SetupEhdNetwork status || return 1
+
+	Syslog "INFO" "execute eHD command: $*"
+	echo -e "\n$*\n" | nc -i 3 -d 0.2 -t $HD_NETD_IP_EHD 23
+}
+
+
+## display picture on eHD
+PictureEhd() {
+	if [ -z "$1" ]; then
+		Syslog "ERROR" "picture required"
+		return 1
+	fi
+
+	if [ ! -e "$1" ]; then
+		Syslog "ERROR" "picture not existing: $1"
+		return 1
+	fi
+
+	if [ -z "$HD_PPMTOFB" ]; then
+		HD_PPMTOFB="/opt/reel/sbin/ppmtofb"
+		Syslog "NOTICE" "picture display on eHD uses default binary: $HD_PPMTOFB"
+	fi
+
+	if [ ! -x "$HD_PPMTOFB" ]; then
+		Syslog "ERROR" "picture display on eHD requires executable: $HD_PPMTOFB"
+		return 1
+	fi
+
+	local fbdev="$(awk '$2 == "hde_fb" { print "/dev/fb" $1 }' /proc/fb)"
+
+	if [ -z "$fbdev" ]; then
+		Syslog "ERROR" "can't find eHD framebuffer device"
+		return 1
+	fi
+
+	$HD_PPMTOFB -f $fbdev -p "$1"
+	rc=$?
+	if [ $rc -ne 0 ]; then
+		Syslog "ERROR" "picture display on eHD failed: $1"
+		return 1
+	fi
+
+	Syslog "INFO" "picture display on eHD successfully: $1"
+}
+
 
 ## Basic checks
 if [ ! -x "$REELFPCTL" ]; then
@@ -730,6 +992,28 @@ case $arg1 in
     set_led_button)
 	SetLEDButton $*
 	;;
+    setup_ehd_kernel)
+	SetupEhdKernel $*
+	;;
+    setup_ehd_boot)
+	case $1 in
+	    reboot)
+		SetupEhdNetwork stop && SetupEhdBoot && SetupEhdNetwork start
+		;;
+	    *)
+		SetupEhdBoot $*
+		;;
+	esac
+	;;
+    setup_ehd_network)
+	SetupEhdNetwork $*
+	;;
+    command_ehd)
+	CommandEhd $*
+	;;
+    picture_ehd)
+	PictureEhd $*
+	;;
     *)
 	cat <<END
 Supported arg1
@@ -757,6 +1041,16 @@ Supported arg1
 		enable/disable/blink LED
 	set_led_button <color>|off|on [<brightness 1-15>|max]
 		set color of button LEDs
+	setup_ehd_kernel
+		setup eHD load kernel module
+	setup_ehd_boot [reboot]
+		setup eHD load boot image (reboot includes network stop/start)
+	setup_ehd_network start|stop|status
+		setup eHD network action
+	command_ehd <command>
+		send command to eHD
+	picture_ehd <picture>
+		display picture on eHD OSD
 END
 	;;
 esac

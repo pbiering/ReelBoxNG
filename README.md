@@ -11,7 +11,7 @@ See also Wiki: https://github.com/pbiering/ReelBoxNG/wiki
 - DONE: ReelBox remote control unit via frontpanel
 - DONE: netceiver (preparation)
 - PARTIAL: frontpanel button (POWER-only so far)
-- NOTPLANNED: add support for eHD (too complicated: kernel module must be enriched for 64-bit, related plugin must be ported to VDR 2.4 and shrinked to functionality which is able to be supported without tweaking VDR upstream)
+- DONE: add support for eHD (see also https://github.com/pbiering/vdr-plugin-reelbox)
 
 ## History
 Starting with easyVDR, switching to BM2LTS, back to easyVDR, now running on vanilla Fedora Linux distribution
@@ -30,10 +30,18 @@ Please use github's issue tracker
 ### src-reelvdr
 
 Contain source code for
+- hdshm3
+- bspshm
 - reelfpctl
 - reelbox-ctrld
 
 By scripts expected target for binaries would be: /opt/reel/sbin (use e.g. softlink)
+
+### bin-reelvdr
+
+Contain binaries for
+- eHD boot image (MIPS)
+- hdplayer binary (MIPS)
 
 ### etc
 
@@ -52,9 +60,11 @@ Contains script / config files, can be either stored directly in related OS dire
 
 ### etc/sysconfig/vdr-plugins.d/
 
-- etc/sysconfig/vdr-plugins.d/graphlcd.conf: example for graphlcd plugin configuration
-- etc/sysconfig/vdr-plugins.d/mcli.conf: example for mcli plugin configuration
-- etc/sysconfig/vdr-plugins.d/remote.conf: example for remote plugin configuration
+- etc/sysconfig/vdr-plugins.d/graphlcd.conf: example for "graphlcd" plugin configuration
+- etc/sysconfig/vdr-plugins.d/mcli.conf: example for "mcli" plugin configuration
+- etc/sysconfig/vdr-plugins.d/remote.conf: example for "remote" plugin configuration
+- etc/sysconfig/vdr-plugins.d/softhddevice.conf: example for "softhddevice" plugin configuration
+- etc/sysconfig/vdr-plugins.d/mpv.conf: example for "mpv" plugin configuration
 
 ### etc/X11
 
