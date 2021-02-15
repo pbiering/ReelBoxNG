@@ -4,7 +4,7 @@ Description=ReelBoxNG eHD image boot
 ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
 ConditionFileNotEmpty=/etc/sysconfig/reel
 
-After=reel-frontpanel.service reel-ehd-kernel.service
+After=reel-ehd-kernel.service
 Before=vdr.service
 Requires=reel-ehd-kernel.service
 

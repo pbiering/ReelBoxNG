@@ -4,7 +4,6 @@ Description=ReelBoxNG eHD hdshm kernel module load
 ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
 ConditionFileNotEmpty=/etc/sysconfig/reel
 
-After=network.target reel-frontpanel.service
 Before=vdr.service
 
 
