@@ -29,7 +29,20 @@ int cacheflush(char *addr, int nbytes, int cache);
 #define BUSY_WAIT 1
 
 
+
+#ifdef PLUGIN_NAME
+
+// included in reelbox plugin
+#include <vdr/tools.h>
+#define dbg1(format, arg...)    dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+#define dbg(format, arg...)     dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+#define printf(format, arg...)  dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+
+#else
+
 #define dbg1(format, arg...) do {} while (0)
+
+#endif
 
 //static hdshm_area_t *bsa;
 //static hdd_data_t *bsd;

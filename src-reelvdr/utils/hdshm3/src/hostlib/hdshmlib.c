@@ -34,10 +34,23 @@
 #define SHMHDDEV "/dev/hdshm"
 
 static int hdfd =- 1;
-//#define dbg1(format, arg...) do {} while (0)
-//#define dbg(format, arg...) do {} while (0)     //printf(format, ## arg) //do {} while (0) //printk(format, ## arg)
-#define dbg1(format, arg...) fprintf(stderr, "%s:%d:%s: " format, __FILE__, __LINE__, __FUNCTION__, ##arg);
-#define dbg(format, arg...) fprintf(stderr, "%s:%d:%s: " format, __FILE__, __LINE__, __FUNCTION__, ##arg);
+
+#ifdef PLUGIN_NAME
+
+// included in reelbox plugin
+#include <vdr/tools.h>
+#define dbg1(format, arg...)    dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+#define dbg(format, arg...)     dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+#define printf(format, arg...)  dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+
+#else
+
+#define dbg1(format, arg...) do {} while (0)
+#define dbg(format, arg...) do {} while (0)     //printf(format, ## arg) //do {} while (0) //printk(format, ## arg)
+//#define dbg1(format, arg...) fprintf(stderr, "%s:%d:%s: " format, __FILE__, __LINE__, __FUNCTION__, ##arg);
+//#define dbg(format, arg...) fprintf(stderr, "%s:%d:%s: " format, __FILE__, __LINE__, __FUNCTION__, ##arg);
+
+#endif
 
 //extern void hd_channel_cleanup(void);
 
