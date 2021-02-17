@@ -34,9 +34,9 @@ int cacheflush(char *addr, int nbytes, int cache);
 
 // included in reelbox plugin
 #include <vdr/tools.h>
-#define dbg1(format, arg...)    dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
-#define dbg(format, arg...)     dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
-#define printf(format, arg...)  dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+#define dbg1(format, arg...)    dsyslog("%s: DEBUG %s " format, PLUGIN_NAME, __FUNCTION__, ## arg)
+#define dbg(format, arg...)     dsyslog("%s: DEBUG %s " format, PLUGIN_NAME, __FUNCTION__, ## arg)
+#define printf(format, arg...)  dsyslog("%s: DEBUG %s " format, PLUGIN_NAME, __FUNCTION__, ## arg)
 
 #else
 
@@ -313,7 +313,7 @@ int hd_channel_read_start_kmem(hd_channel_t *bsc, void **buf, void** kmem, int *
 	}
 	if (bcc->used_areas!=1) {
 		printf("Read sanity CH%i: Used areas %i.\n",bsc->channel,bcc->used_areas);
-		dump_bcc(bcc);
+		// dump_bcc(bcc);
 		return 0;
 //		exit(0);
 	}
@@ -484,7 +484,7 @@ int hd_channel_write_start(hd_channel_t *bsc, void **buf, int size, int timeout)
 	bcc=(hd_channel_control_t*)bsc->control_area->mapped;
 	if (bcc->used_areas!=1) {
 		printf("Write sanity CH%i: Used areas %i.\n", bsc->channel, bcc->used_areas);
-		dump_bcc(bcc);
+		// dump_bcc(bcc);
 		return 0;
 //		exit(0);
 	}

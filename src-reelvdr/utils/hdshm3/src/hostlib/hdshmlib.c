@@ -39,9 +39,9 @@ static int hdfd =- 1;
 
 // included in reelbox plugin
 #include <vdr/tools.h>
-#define dbg1(format, arg...)    dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
-#define dbg(format, arg...)     dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
-#define printf(format, arg...)  dsyslog("reelbox: DEBUG %s " format, __FUNCTION__, ## arg)
+#define dbg1(format, arg...)    dsyslog("%s: DEBUG %s " format, PLUGIN_NAME, __FUNCTION__, ## arg)
+#define dbg(format, arg...)     dsyslog("%s: DEBUG %s " format, PLUGIN_NAME, __FUNCTION__, ## arg)
+#define printf(format, arg...)  dsyslog("%s: DEBUG %s " format, PLUGIN_NAME, __FUNCTION__, ## arg)
 
 #else
 
