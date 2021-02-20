@@ -88,7 +88,7 @@ int main(int argc, char** argv)
                 }
 	        while(1) {
         	        ch_rx=hd_channel_open(HDSHM_SHMNET1_TX);
-        	        if (ch_tx)
+		        if (ch_rx)
         	                break;
                         sleep(1);
                 }
