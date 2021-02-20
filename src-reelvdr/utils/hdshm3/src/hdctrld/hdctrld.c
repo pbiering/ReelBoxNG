@@ -226,8 +226,9 @@ void usage(void)
 #ifdef CONFIG_MIPS
 		"         -d         Start HD player daemon\n"
 #endif
-		"         -s         Start HD player\n"
-		"         -k         Stop HD player\n"
+		"         -s         Start  HD player\n"
+		"         -k         Stop   HD player\n"
+		"         -S         Status HD player\n"
 		"         -P         Power down decoder\n"
 #ifndef RBLITE
 		"         -M <0|1>   Mix analog audio with MB sound\n"
@@ -260,6 +261,7 @@ int main(int argc, char** argv)
 	char vm[256]="",dm[256]="",am[256]="";
 	char anm[256]="",pm[256]="",dam[256]="";
 	int enable=-1;
+	int status=0;
 	int audiomix=-1;
 	int volume=-1;
         int dont_touch_osd=-1;
@@ -270,9 +272,9 @@ int main(int argc, char** argv)
 	while (1)
         {
 #ifdef CONFIG_MIPS
-		char c = getopt(argc, argv, "dskv:o:a:O:p:M:A:V:X:PB:C:G:D:?h");
+		char c = getopt(argc, argv, "dskv:o:a:O:p:M:A:V:X:PB:C:G:D:S?h");
 #else
-		char c = getopt(argc, argv, "skv:o:a:O:p:M:A:V:X:PB:C:G:D:?h");
+		char c = getopt(argc, argv, "skv:o:a:O:p:M:A:V:X:PB:C:G:D:S?h");
 #endif
 		if (c == -1)
                         break;
@@ -287,6 +289,9 @@ int main(int argc, char** argv)
 			break;
 		case 'k':
 			enable=0;
+			break;
+		case 'S':
+			status=1;
 			break;
 		case 'v':
 			strncpy(vm,optarg,256);
@@ -350,6 +355,11 @@ int main(int argc, char** argv)
 
 	if (enable>=0)
 		hdd->hdp_enable=enable;
+
+	if (status>0) {
+		printf("HD player running: %s\n", hdd->hdp_running ? "yes" : "no");
+		return((hdd->hdp_running > 0) ? 0 : 1);
+	};
 
 	if (powerdown)
 		hdd->hd_shutdown=powerdown;
