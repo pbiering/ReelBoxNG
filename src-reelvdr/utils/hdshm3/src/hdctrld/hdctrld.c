@@ -147,7 +147,7 @@ void struct_init(int clear)
 	hdshm_area_t *hsa;
 	if (hd_init(0)) {
 		fprintf(stderr,"hdctrld: hdshm driver not loaded!\n");
-		exit(0);
+		exit(1);
 	}
 
 #ifdef CONFIG_MIPS
@@ -158,7 +158,7 @@ void struct_init(int clear)
 
 		if (!hsa) {
 			fprintf(stderr,"hdctrld: Can't create shm area!\n");
-			exit(0);
+			exit(1);
 		}
 
 		hdd=(hd_data_t*)hsa->mapped;
@@ -211,7 +211,7 @@ void struct_init(int clear)
 
 	if (!hsa) {
 		fprintf(stderr,"hdctrld: DeCypher HDSHM not running!\n");
-		exit(0);
+		exit(1);
 	}
 	hdd=(hd_data_t*)hsa->mapped;
 #endif
