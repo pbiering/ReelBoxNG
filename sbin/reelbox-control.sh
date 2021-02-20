@@ -760,6 +760,11 @@ SetupEhdBoot() {
 		Syslog "NOTICE" "setup of eHD/boot uses default timeout: $HD_BOOT_TIMEOUT"
 	fi
 
+	if [ -z "$HD_BOOT_TRIES" ]; then
+		HD_BOOT_TRIES=3
+		Syslog "NOTICE" "setup of eHD/boot uses default tries: $HD_BOOT_TRIES"
+	fi
+
 	if [ -z "$HD_BOOT_BIN" ]; then
 		HD_BOOT_BIN="/opt/reel/sbin/hdboot"
 		Syslog "NOTICE" "setup of eHD/boot uses default binary: $HD_BOOT_BIN"
@@ -770,14 +775,24 @@ SetupEhdBoot() {
 		return 1
 	fi
 
-	$HD_BOOT_BIN -r -w $HD_BOOT_TIMEOUT -i $HD_BOOT_IMAGE
-	rc=$?
-	if [ $rc -ne 0 ]; then
-		Syslog "ERROR" "setup of eHD/boot can't load image: $HD_BOOT_IMAGE"
+	local i=$HD_BOOT_TRIES
+
+	while [ $i -gt 0 ]; do
+		i=$[ $i - 1 ]
+		$HD_BOOT_BIN -r -w $HD_BOOT_TIMEOUT -i $HD_BOOT_IMAGE
+		rc=$?
+		if [ $rc -eq 0 ]; then
+			break
+		fi
+	done
+
+	if [ $i -eq 0 ]; then
+		Syslog "ERROR" "setup of eHD/boot can't load image after $HD_BOOT_TRIES tries: $HD_BOOT_IMAGE"
 		return 1
 	fi
 
-	Syslog "INFO" "setup of eHD/boot successfully loaded image: $HD_BOOT_IMAGE"
+	local delta=$[ $HD_BOOT_TRIES - $i ]
+	Syslog "INFO" "setup of eHD/boot successfully loaded image after $delta tries: $HD_BOOT_IMAGE"
 }
 
 
@@ -973,7 +988,7 @@ SetupEhdHdplayer() {
 		# sleep 1 additional second for safetiness
 		sleep 1
 
-		local delta=$[ $HD_CTRLD_TIMEOUT - i ]
+		local delta=$[ $HD_CTRLD_TIMEOUT - $i ]
 		Syslog "INFO" "setup of eHD/hdplayer: successfully running (after $delta seconds)"
 		;;
 
