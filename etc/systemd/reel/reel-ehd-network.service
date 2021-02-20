@@ -3,11 +3,10 @@ Description=ReelBoxNG eHD network daemon
 
 ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
 ConditionFileNotEmpty=/etc/sysconfig/reel
-ConditionFileNotEmpty=/var/lib/tftpboot/hdplayer/hdplayer
 
 After=network.target reel-ehd-boot.service
 Before=vdr.service
-Requires=reel-ehd-boot.service tftp.service
+Requires=reel-ehd-boot.service
 
 
 [Service]

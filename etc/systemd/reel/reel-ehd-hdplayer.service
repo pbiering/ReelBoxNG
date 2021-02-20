@@ -1,0 +1,25 @@
+[Unit]
+Description=ReelBoxNG eHD hdplayer watch
+
+ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
+ConditionFileNotEmpty=/etc/sysconfig/reel
+
+After=network.target reel-ehd-boot.service reel-ehd-network.service
+Before=vdr.service
+Requires=reel-ehd-boot.service reel-ehd-network.service tftp.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-eHD-hdplayer
+
+EnvironmentFile=/etc/sysconfig/reel
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/reelbox-control.sh setup_ehd_hdplayer watch
+ExecStop=/opt/reel/sbin/reelbox-control.sh setup_ehd_hdplayer stop
+
+
+[Install]
+WantedBy=multi-user.target

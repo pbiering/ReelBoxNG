@@ -4,9 +4,9 @@ Description=ReelBoxNG eHD splash picture
 ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
 ConditionFileNotEmpty=/opt/reel/share/reel/ReelBoxNG-720x576.pnm
 
-After=reel-ehd-network.service
+After=reel-ehd-hdplayer.service
 Before=vdr.service
-Requires=reel-ehd-network.service
+Requires=reel-ehd-hdplayer.service
 
 
 [Service]
