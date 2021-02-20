@@ -5,7 +5,7 @@ ConditionFileIsExecutable=/usr/bin/sleep
 
 Requires=reel-progress-4.service
 
-After=reel-progress-4.service
+After=reel-progress-4.service reel-ehd-boot.service
 
 
 [Service]

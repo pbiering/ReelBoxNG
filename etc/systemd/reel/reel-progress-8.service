@@ -5,7 +5,7 @@ ConditionFileIsExecutable=/usr/bin/sleep
 
 Requires=reel-progress-7.service
 
-After=reel-progress-7.service
+After=reel-progress-7.service reel-ehd-splash.service
 
 Before=vdr.service
 
