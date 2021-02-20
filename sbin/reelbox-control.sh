@@ -19,7 +19,8 @@
 # 20210201/pbev: keep (defined) button LED brightness on status LED change
 # 20210212/pbev: add support for eHD (kernel/boot/network)
 # 20210214/pbev: add support for eHD boot "reboot"
-# 20210214/pbev: add support for eHD command
+# 20210214/pbev: add support for eHD command (incomplete)
+# 20210220/pbev: add support for eHD hdplayer
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -891,6 +892,107 @@ SetupEhdNetwork() {
 	esac
 }
 
+## setup eHD hdplayer
+SetupEhdHdplayer() {
+	if [ "$HD_SHM" != "yes" ]; then
+		Syslog "ERROR" "setup of eHD is not enabled: HD_SHM=$HD_SHM (requires 'yes')"
+		return 0
+	fi
+
+	if [ -z "$HD_CTRLD_BIN" ]; then
+		HD_CTRLD_BIN="/opt/reel/sbin/hdctrld"
+		Syslog "NOTICE" "setup of eHD/network uses default binary: $HD_CTRLD_BIN"
+	fi
+
+	if [ ! -x "$HD_CTRLD_BIN" ]; then
+		Syslog "ERROR" "setup of eHD/network requires executable: $HD_CTRLD_BIN"
+		return 1
+	fi
+
+	if [ -z "$HD_CTRLD_TIMEOUT" ]; then
+		HD_CTRLD_TIMEOUT=10
+		Syslog "NOTICE" "setup of eHD/network uses default timeout: $HD_CTRLD_TIMEOUT"
+	fi
+
+	case $1 in
+	    stop)
+		# get status
+		$HD_CTRLD_BIN -S
+		if [ $? -ne 0 ]; then
+			Syslog "NOTICE" "setup of eHD/hdplayer: stop not required, not running"
+			return 0
+		fi
+
+		Syslog "NOTICE" "setup of eHD/hdplayer: trigger stop"
+		$HD_CTRLD_BIN -k
+		if [ $? -ne 0 ]; then
+			Syslog "ERROR" "setup of eHD/hdplayer: trigger stop was not successful"
+			return 1
+		fi
+		return 0
+		;;
+
+	    start|watch)
+		if [ "$1" = "start" ]; then
+			# get status
+			$HD_CTRLD_BIN -S
+			if [ $? -eq 0 ]; then
+				Syslog "NOTICE" "setup of eHD/hdplayer: start not required, already running"
+				return 0
+			fi
+
+			Syslog "NOTICE" "setup of eHD/hdplayer: trigger start"
+			$HD_CTRLD_BIN -s
+			if [ $? -ne 0 ]; then
+				Syslog "ERROR" "setup of eHD/hdplayer: trigger start was not successful"
+				return 1
+			fi
+		else
+			Syslog "NOTICE" "setup of eHD/hdplayer: watch start"
+		fi
+
+		local i=$HD_CTRLD_TIMEOUT
+
+		# check whether hdplayer has started successfully
+		while [ $i -gt 0 ]; do
+			sleep 1
+			i=$[ $i - 1 ]
+			# get status
+			$HD_CTRLD_BIN -S
+			if [ $? -ne 0 ]; then
+				continue
+			fi
+			break
+		done
+
+		if [ $i -eq 0 ]; then
+			Syslog "ERROR" "setup of eHD/hdplayer: start was not sucessful after $HD_CTRLD_TIMEOUT seconds"
+			return 1
+		fi
+
+		# sleep 1 additional second for safetiness
+		sleep 1
+
+		local delta=$[ $HD_CTRLD_TIMEOUT - i ]
+		Syslog "INFO" "setup of eHD/hdplayer: successfully running (after $delta seconds)"
+		;;
+
+	    status)
+		$HD_CTRLD_BIN -S
+		if [ $? -eq 0 ]; then
+			Syslog "NOTICE" "status of eHD/hdplayer: running=YES"
+			return 0
+		else
+			Syslog "NOTICE" "status of eHD/hdplayer: running=NO"
+			return 1
+		fi
+		;;
+
+	    *)
+		Syslog "NOTICE" "unsupported option: $1"
+		;;
+	esac
+}
 
 ## command eHD
 CommandEhd() {
@@ -998,7 +1100,7 @@ case $arg1 in
     setup_ehd_boot)
 	case $1 in
 	    reboot)
-		SetupEhdNetwork stop && SetupEhdBoot && SetupEhdNetwork start
+		SetupEhdHdplayer stop && SetupEhdNetwork stop && SetupEhdBoot && SetupEhdNetwork start && SetupEhdHdplayer watch
 		;;
 	    *)
 		SetupEhdBoot $*
@@ -1007,6 +1109,9 @@ case $arg1 in
 	;;
     setup_ehd_network)
 	SetupEhdNetwork $*
+	;;
+    setup_ehd_hdplayer)
+	SetupEhdHdplayer $*
 	;;
     command_ehd)
 	CommandEhd $*
@@ -1044,9 +1149,11 @@ Supported arg1
 	setup_ehd_kernel
 		setup eHD load kernel module
 	setup_ehd_boot [reboot]
-		setup eHD load boot image (reboot includes network stop/start)
+		setup eHD load boot image (reboot includes network stop/start and watch for running hdplayer)
 	setup_ehd_network start|stop|status
 		setup eHD network action
+	setup_ehd_hdplayer start|stop|status|watch
+		setup eHD hdplayer action
 	command_ehd <command>
 		send command to eHD
 	picture_ehd <picture>
