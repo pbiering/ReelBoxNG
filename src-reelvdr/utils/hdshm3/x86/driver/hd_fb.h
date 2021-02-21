@@ -27,8 +27,13 @@
 static int has_fb = 0;
 module_param(has_fb, int, 0);
 MODULE_PARM_DESC(has_fb, "enable framebuffer interface");
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)) // TODO: check when "hexint" was introduced
 module_param(hd_dbg_mask, hexint, 0);
 MODULE_PARM_DESC(hd_dbg_mask, "set debug mask for module in hexint format 0x......");
+#else
+module_param(hd_dbg_mask, int, 0);
+MODULE_PARM_DESC(hd_dbg_mask, "set debug mask for module in integer format");
+#endif
 
 struct hde_fb {
 	struct fb_info fb_info; 
