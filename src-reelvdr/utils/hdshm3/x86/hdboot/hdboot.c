@@ -108,6 +108,8 @@ unsigned char* pcimap(off_t offset)
 /*------------------------------------------------------------------------*/
 void disable_pci_burst(unsigned long base)
 {
+	fprintf(stderr, "%s: called with base=%lx\n", __FUNCTION__, base);
+
 	struct mtrr_gentry gmtrr;
 	struct mtrr_sentry mtrr;
 	int fd;
@@ -135,6 +137,8 @@ void enable_pci_burst(unsigned long base, unsigned char *pci_base)
 	int fd;
 	int chipvers;
 
+	fprintf(stderr, "%s: called with base=%lx pci_base=%p\n", __FUNCTION__, base, pci_base);
+
 	// Don't enable bursts on RevA chips
 	chipvers=*(volatile int*)(pci_base+CCB_REG_CHIPINFO);
 	if ((chipvers&0xf)==0)
@@ -146,13 +150,15 @@ void enable_pci_burst(unsigned long base, unsigned char *pci_base)
 	// Enable write combining
 	// FIXME: Just DRAM?
 	mtrr.type=MTRR_TYPE_WRCOMB;
-	mtrr.base=base;
+	mtrr.base=base & 0xffffffff;
 	mtrr.size=HD_MEM_SIZE;
 	fd=open ("/proc/mtrr", O_WRONLY, 0);
 	if (fd>=0) {
-		printf("Set MTRR @ %lx\n",base);
+		fprintf(stderr, "%s: set MTRR mtrr.base=%llx mtrr.size=%x type=MTRR_TYPE_WRCOMB\n",__FUNCTION__, mtrr.base, mtrr.size);
 		ioctl (fd, MTRRIOC_SET_ENTRY, &mtrr);
 		close(fd);
+	} else {
+		fprintf(stderr, "%s: cannot set MTRR (problem during open /proc/mtrr)\n",__FUNCTION__);
 	}
 }
 /*------------------------------------------------------------------------*/
@@ -236,11 +242,12 @@ int warm_reset(unsigned char *pci_base)
 {
 	int fd;
 //	printf("%x\n",CCB_REG_CCBCTRL);
-	puts("Warm Reset");
+	fprintf(stderr, "%s: trigger warm reset via ioctl\n", __FUNCTION__);
 	fd=open("/dev/hdshm",O_RDWR);
 	if (fd>=0) {
 		ioctl(fd, IOCTL_HDSHM_SHUTDOWN, 0);	// Clear booted-flag
 		close(fd);
+		usleep(100*1000);
 	}
 
 	*(volatile int*)(pci_base+CCB_REG_CCBCTRL)|=1;
@@ -249,7 +256,7 @@ int warm_reset(unsigned char *pci_base)
 
 	// verify mapping
 	if (*(volatile int*)(pci_base+SEM_3_SCRATCH_REG)!=0) {
-		fprintf(stderr,"%s:major problem: PCI memory mapping not working pci_base+SEM_3_SCRATCH_REG=%x but has to be 0\n", __FUNCTION__, *(volatile int*) (pci_base+SEM_3_SCRATCH_REG));
+		fprintf(stderr,"%s: major problem: PCI memory mapping not working pci_base+SEM_3_SCRATCH_REG=%x but has to be 0\n", __FUNCTION__, *(volatile int*) (pci_base+SEM_3_SCRATCH_REG));
 		return 1;
 	};
 	return 0;
@@ -443,7 +450,7 @@ int main(int argc, char ** argv)
 	fprintf(stderr, "%s: map bar1=%x to pci_base=%p\n", __FUNCTION__, bar1, pci_base);
 
 	if (strlen(fname)) {
-		disable_pci_burst(bar1);
+		disable_pci_burst(bar1 & 0xffffffff);
 		if (wait_for_pciboot(pci_base,0) || do_reset) {
 			retval = warm_reset(pci_base);
 			if (retval)
@@ -452,7 +459,7 @@ int main(int argc, char ** argv)
 		}
 		upload_start(pci_base, fname, entry, verify, cmdline);
 		if (!no_mtrr)
-			enable_pci_burst(bar1, pci_base);
+			enable_pci_burst(bar1 & 0xffffffff, pci_base);
 	}
 
 	if (wait>=0)
