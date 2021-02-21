@@ -13,8 +13,10 @@ ifneq ($(findstring 2.6,$(KERNELRELEASE)),)
  export-objs:=
  list-multi:=
  KMODSUF:= ko
+ KMAKEOPTION = M
 else
  KMODSUF:= o
+ KMAKEOPTION = SUBDIRS
 endif
 
 ifeq ($(KERNELPATH),)
@@ -35,7 +37,7 @@ obj-m = hdshm.o
 
 all:
 	echo $(KERNELPATH)
-	$(MAKE) V=1 -C $(KERNELPATH) SUBDIRS=$(shell pwd) modules
+	$(MAKE) V=1 -C $(KERNELPATH) $(KMAKEOPTION)=$(shell pwd) modules
 	cp hdshm.ko hdshm_host.ko
 
 install: hdshm.ko
