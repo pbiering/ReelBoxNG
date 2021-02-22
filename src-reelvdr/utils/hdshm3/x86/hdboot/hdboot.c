@@ -247,7 +247,7 @@ int warm_reset(unsigned char *pci_base)
 	if (fd>=0) {
 		ioctl(fd, IOCTL_HDSHM_SHUTDOWN, 0);	// Clear booted-flag
 		close(fd);
-		usleep(100*1000);
+		usleep(500*1000);
 	}
 
 	*(volatile int*)(pci_base+CCB_REG_CCBCTRL)|=1;
