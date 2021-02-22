@@ -103,10 +103,14 @@ int main(int argc, char** argv)
 	}
 
 	if (master)
-        	system("/sbin/ifconfig tun0 " MASTER_IP " netmask " NETMASK " mtu 8300;"
+		ret = system("/sbin/ifconfig tun0 " MASTER_IP " netmask " NETMASK " mtu 8300;"
         	       "route add default gw " HOST_IP );
         else
-        	system("/sbin/ifconfig tun0 " HOST_IP " netmask " NETMASK " mtu 8300");
+		ret = system("/sbin/ifconfig tun0 " HOST_IP " netmask " NETMASK " mtu 8300");
+
+	if (ret != 0) {
+		printf("SHMNETD ERROR: problem with network configuration via 'system' call\n");
+	};
 
 	printf("SHMNETD Running...\n");
 
@@ -131,7 +135,11 @@ int main(int argc, char** argv)
 
 		ll=0;
                 if (hd_channel_read_start(ch_rx,&txbuffer,&ll,0)) {
-                        write(tunfd, txbuffer, ll);
+                        ret = write(tunfd, txbuffer, ll);
+			if (ret < 0) {
+				printf("SHMNETD ERROR: can't write to TUN interface\n");
+				exit(1);
+			};
                         hd_channel_read_finish(ch_rx);
                 }
         }        
