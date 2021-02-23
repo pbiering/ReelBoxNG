@@ -40,6 +40,12 @@ obj-m = hdshm.o
 
 -include $(KERNELPATH)/Rules.make
 
+all:	var-test
+	@echo KERNEL_VERSION=$(KERNEL_VERSION)
+	@echo KERNELPATH=$(KERNELPATH)
+	$(MAKE) V=1 -C $(KERNELPATH) $(KMAKEOPTION)=$(shell pwd) modules
+	cp hdshm.ko hdshm_host.ko
+
 var-test:
 	@echo "KERNEL_VERSION     =$(KERNEL_VERSION)"
 	@echo "KERNEL_VERSION_TEST=$(KERNEL_VERSION_TEST)"
@@ -49,11 +55,6 @@ var-test:
 	@echo "KERNELPATH         =$(KERNELPATH)"
 	@echo "MODULEPATH         =$(MODULEPATH)"
 
-all:
-	@echo KERNEL_VERSION=$(KERNEL_VERSION)
-	@echo KERNELPATH=$(KERNELPATH)
-	$(MAKE) V=1 -C $(KERNELPATH) $(KMAKEOPTION)=$(shell pwd) modules
-	cp hdshm.ko hdshm_host.ko
 
 install: hdshm.ko
 	sudo install -p -D $^ /lib/modules/$(KERNELRELEASE)/kernel/drivers/video/
