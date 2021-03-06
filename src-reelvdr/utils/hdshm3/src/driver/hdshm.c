@@ -290,7 +290,7 @@ int hdshm_get_area(struct hdshm_file *bsf, unsigned long arg)
 	int ret=0;
 
 	if (!hdd.hd_root->booted) {
-		hd_err("hdd.hdd_root->booted=%d (not booted))\n", hdd.hd_root->booted)
+		hd_err("hdd.hdd_root->booted=%d (not booted)\n", hdd.hd_root->booted)
 	        return -ENODEV;
 	};
 	        
