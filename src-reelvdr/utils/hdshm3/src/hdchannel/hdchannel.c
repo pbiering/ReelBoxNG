@@ -419,6 +419,11 @@ hd_channel_entry_t *hd_channel_find_space(hd_channel_control_t *bcc, int size)
 	int rp,wp,wpm;
 	hd_channel_entry_t *bcer = NULL, *bcew = NULL, *bcex = NULL;
 	int area_size0;
+
+	if (bcc->max_entries == 0) {
+		printf("%s ERROR: bcc->max_entries == 0\n", __FUNCTION__);
+		return NULL;
+	};
 	
 	rp=bcc->read_entry%bcc->max_entries;
 	wp=bcc->write_entry%bcc->max_entries;
