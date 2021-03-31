@@ -321,6 +321,7 @@ int hdshm_get_area(struct hdshm_file *bsf, unsigned long arg)
 	bsa.flags=bse->flags;
 	bsa.usage=bse->usage;
 	bsa.kernel_mem=(char*)hdd.start +((long)bse->phys-(long)hdd.start_phys);
+	hd_dbg(HD_DEBUG_BIT_MODULE_AREA, "bsa phys=0x%lx length=0x%x flags=0x%x usage=%d kernel_mem=0x%p", bsa.physical, bsa.length, bsa.flags, bsa.usage, bsa.kernel_mem);
 	
 	if (copy_to_user((void*)arg,&bsa,sizeof(hdshm_area_t))) {
 		hd_err("copy_to_user failed\n")
@@ -735,7 +736,7 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 			return -EEXIST;
 		}
 	}
-	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "mmap find");
+	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "call hdshm_find_area with id=0x%x", bsf->id);
 	bse=hdshm_find_area(bsf->id,NULL);
 	
 	if (!bse) {
@@ -743,10 +744,12 @@ int hdshm_mmap(struct file * file, struct vm_area_struct * vma)
 		hdshm_unlock_table();
 		return -ENOENT;		
 	}
-	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "mmap bse=%p user 0x%x phys=0x%x size 0x%x offset 0x%x",
-	    bse,
+	hd_dbg(HD_DEBUG_BIT_MODULE_MMAP, "bse phys=0x%x length=0x%x flags=0x%x usage=%d  vma vm_start=0x%x size=0x%x vm_pgoff=0x%x",
+	    bse->phys,
+	    bse->length,
+	    bse->flags,
+	    bse->usage,
 	    (int)vma->vm_start,
-	    (int)bse->phys,
 	    (int)(vma->vm_end - vma->vm_start),
 	    (int)vma->vm_pgoff);
 #ifndef IS_HD
