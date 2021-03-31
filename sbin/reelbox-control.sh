@@ -756,7 +756,7 @@ SetupEhdBoot() {
 	fi
 
 	if [ -z "$HD_BOOT_TIMEOUT" ]; then
-		HD_BOOT_TIMEOUT=20
+		HD_BOOT_TIMEOUT=30
 		Syslog "NOTICE" "setup of eHD/boot uses default timeout: $HD_BOOT_TIMEOUT"
 	fi
 
@@ -784,6 +784,7 @@ SetupEhdBoot() {
 		if [ $rc -eq 0 ]; then
 			break
 		fi
+		sleep 3
 	done
 
 	if [ $i -eq 0 ]; then
