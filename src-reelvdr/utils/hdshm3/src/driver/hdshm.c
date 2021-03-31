@@ -682,6 +682,7 @@ static long hdshm_ioctl (struct file *file, unsigned int cmd, unsigned long arg)
 //                ret=hdshm_dma(bsf,arg);
                 break;
         case IOCTL_HDSHM_CMDLINE:
+		hd_dbg(HD_DEBUG_BIT_MODULE_IOCTL, "call IOCTL_HDSHM_CMDLINE with arg=0xlx\n", arg)
                 copy_to_user(arg,KSEG1+0x0001008,256);
                 break;
                 
