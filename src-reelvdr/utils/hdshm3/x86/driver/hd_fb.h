@@ -29,10 +29,10 @@ module_param(has_fb, int, 0);
 MODULE_PARM_DESC(has_fb, "enable framebuffer interface");
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)) // TODO: check when "hexint" was introduced
 module_param(hd_dbg_mask, hexint, 0);
-MODULE_PARM_DESC(hd_dbg_mask, "set debug mask for module in hexint format 0x......");
+MODULE_PARM_DESC(hd_dbg_mask, "set debug mask for module in hexint format 0x.. (max. 8 nibbles)");
 #else
 module_param(hd_dbg_mask, int, 0);
-MODULE_PARM_DESC(hd_dbg_mask, "set debug mask for module in integer format");
+MODULE_PARM_DESC(hd_dbg_mask, "set debug mask for module in integer format (0 - 2^32-1");
 #endif
 
 struct hde_fb {
