@@ -335,7 +335,7 @@ void usage(void)
 		"       -e <hex>     Manually set kernel entry address (default: auto detect)\n"
 		"       -v           Verify DDR-RAM after upload\n"
 		"       -w <timeout> Wait until kernel is up\n"
-		"       -c <string>  Commandline\n"
+		"       -c <string>  Commandline option for kernel boot\n"
 		"       -M           Disable MTRR speedup\n"
 		"Extra options for kernel module:\n"
 		"       -D <hexint>  Configure kernel module debug mask via IOCTL\n"
@@ -381,8 +381,7 @@ int main(int argc, char ** argv)
 		switch (i) 
 		{
 		case 'c':
-			strncpy(cmdline,optarg,255);
-			cmdline[255]=0;
+			snprintf(cmdline, sizeof(cmdline), "%s", optarg);
 			break;
 		case 'e':
 			entry=strtoul(optarg,NULL,16);
