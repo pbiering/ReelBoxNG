@@ -19,7 +19,7 @@
 # 20210201/pbev: keep (defined) button LED brightness on status LED change
 # 20210212/pbev: add support for eHD (kernel/boot/network)
 # 20210214/pbev: add support for eHD boot "reboot"
-# 20210214/pbev: add support for eHD command (incomplete)
+# 20210214/pbev: add support for eHD command
 # 20210220/pbev: add support for eHD hdplayer
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
@@ -1015,7 +1015,7 @@ CommandEhd() {
 	SetupEhdNetwork status || return 1
 
 	Syslog "INFO" "execute eHD command: $*"
-	echo -e "\n$*\n" | nc -i 3 -d 0.2 -t $HD_NETD_IP_EHD 23
+	echo -e "\n$*\n" | nc -i 0.2 -d 0.2 -t --no-shutdown $HD_NETD_IP_EHD 23
 }
 
 
