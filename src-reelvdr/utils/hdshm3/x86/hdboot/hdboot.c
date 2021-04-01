@@ -339,6 +339,7 @@ void usage(void)
 		"       -M           Disable MTRR speedup\n"
 		"Extra options for kernel module:\n"
 		"       -D <hexint>  Configure kernel module debug mask via IOCTL\n"
+		"       -G           Send GET_STATUS to module via IOCTL\n"
 		"       -E           Send HDFBEXIT to kernel module via IOCTL\n");
 	exit(1);
 }
@@ -350,15 +351,11 @@ int hdshm_ioctl(unsigned int cmd, unsigned long arg) {
 	fd=open("/dev/hdshm",O_RDWR);
 	if (fd<0) {
 		printf("ERROR : can't open kernel module device /dev/hdshm (executed as root and module loaded?)\n");
-		return 1;
+		return -1;
 	}
 	retval = ioctl(fd, cmd, arg);
 	close(fd);
-	if (retval != 0) {
-		printf("ERROR : problem with IOCTL in kernel module\n");
-		return 1;
-	};
-	return 0;
+	return retval;
 }
 
 /*------------------------------------------------------------------------*/
@@ -377,7 +374,7 @@ int main(int argc, char ** argv)
 	int retval;
 	uint32_t hd_dbg_mask;
 
-	while ((i = getopt(argc, argv, "c:e:i:p:rvw:MD:Eh?")) != -1) {
+	while ((i = getopt(argc, argv, "c:e:i:p:rvw:MD:EGh?")) != -1) {
 		switch (i) 
 		{
 		case 'c':
@@ -401,6 +398,26 @@ int main(int argc, char ** argv)
 			break;
 		case 'w':
 			wait=atoi(optarg);
+			break;
+		case 'G':
+			printf("Request GET_STATUS from kernel module via IOCTL\n");
+			retval = hdshm_ioctl(IOCTL_HDSHM_GET_STATUS, 0);
+			if (retval < 0) {
+				printf("ERROR : problem requesting GET_STATUS from kernel module via IOCTL\n");
+				exit(1);
+			};
+			if (retval & HDSHM_STATUS_LOCK_TIMEOUT) {
+				printf("ERROR : GET_STATUS returns HDSHM_STATUS_LOCK_TIMEOUT (retval=0x%x)\n", retval);
+				exit(2);
+			} else if (retval & HDSHM_STATUS_NOT_BOOTED) {
+				printf("ERROR : GET_STATUS returns HDSHM_STATUS_NOT_BOOTED (retval=0x%x)\n", retval);
+				exit(3);
+			} else if (retval != 0) {
+				printf("ERROR : GET_STATUS returns unknown status (retval=0x%x)\n", retval);
+				exit(9);
+			};
+			printf("INFO  : GET_STATUS returns OK (retval=0x%x)\n", retval);
+			exit(0);
 			break;
 		case 'E':
 			printf("Trigger HDFBEXIT to kernel module via IOCTL\n");
