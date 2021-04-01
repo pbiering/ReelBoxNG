@@ -465,7 +465,7 @@ int main(int argc, char ** argv)
 	};
 	fprintf(stderr, "%s: map bar1=%x to pci_base=%p\n", __FUNCTION__, bar1, pci_base);
 
-	if (strlen(fname)) {
+	if (strlen(fname) || do_reset) {
 		disable_pci_burst(bar1 & 0xffffffff);
 		if (wait_for_pciboot(pci_base,0) || do_reset) {
 			retval = warm_reset(pci_base);
@@ -473,9 +473,14 @@ int main(int argc, char ** argv)
 				exit(1);
 			sleep(2);
 		}
-		upload_start(pci_base, fname, entry, verify, cmdline);
+		if (strlen(fname))
+			upload_start(pci_base, fname, entry, verify, cmdline);
+		else
+			fprintf(stderr, "%s: no filename given to boot (only reset executed)\n", __FUNCTION__);
 		if (!no_mtrr)
 			enable_pci_burst(bar1 & 0xffffffff, pci_base);
+	} else {
+		fprintf(stderr, "%s: no filename given to boot\n", __FUNCTION__);
 	}
 
 	if (wait>=0)
