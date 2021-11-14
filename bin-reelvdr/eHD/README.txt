@@ -6,5 +6,5 @@ eHD hdplayer(MIPS): hdplayer-ReelBox-20210215
 original source: ReelBox AVR II installation
 extract with: tar jxf hdplayer-ReelBox-20210215.tar.bz2
 copy it into TFTP subdirectory, e.g.
-	# mkdir /var/lib/tftpboot/hdplayer/hdplayer
+	# mkdir /var/lib/tftpboot/hdplayer
 	# cp /hdplayer-ReelBox-20210215 /var/lib/tftpboot/hdplayer/hdplayer
