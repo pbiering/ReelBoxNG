@@ -55,3 +55,8 @@ dkms.conf
 src-reelvdr/utils/reelbox-control/reelbox-ctrld
 src-reelvdr/utils/reelfpctl/reelfpctl
 src-reelvdr/utils/reelfpctl/reelfpctl1
+
+# uncompressed images
+bin-reelvdr/eHD/*.bin
+bin-reelvdr/eHD/hdplayer-ReelBox-20210215
+bin-reelvdr/eHD/hdplayer-ua0lnjehd-20170522
