@@ -104,11 +104,13 @@ void glcd_init(void)
 		{
 			if (GLCD::Config.driverConfigs[displayNumber].name == "st7565r")
 				break;
+			if (GLCD::Config.driverConfigs[displayNumber].name == "st7565r-reel")
+				break;
 		}
 
 		if (displayNumber == GLCD::Config.driverConfigs.size())
 		{
-			fprintf(stderr, "ERROR: st7565r or reel_usbfp not found in config file!\n");
+			fprintf(stderr, "ERROR: st7565r/st7565r-reel or reel_usbfp not found in config file!\n");
 			exit(3);
 		}
 	foundit:

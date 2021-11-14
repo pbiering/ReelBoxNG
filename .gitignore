@@ -50,3 +50,21 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# general
+.dependencies
+
+# compiled binaries
+src-reelvdr/utils/reelbox-control/reelbox-ctrld
+src-reelvdr/utils/reelfpctl/reelfpctl
+src-reelvdr/utils/reelfpctl/reelfpctl1
+src-reelvdr/utils/hdshm3/x86/hdboot/hdboot
+src-reelvdr/utils/hdshm3/x86/hdctrld/hdctrld
+src-reelvdr/utils/hdshm3/x86/hdfbctl/hdfbctl
+src-reelvdr/utils/hdshm3/x86/shmnetd/shmnetd
+src-reelvdr/utils/hdshm3/x86/hdtsplay/hdtsplay
+
+# uncompressed images
+bin-reelvdr/eHD/*.bin
+bin-reelvdr/eHD/hdplayer-ReelBox-20210215
+bin-reelvdr/eHD/hdplayer-ua0lnjehd-20170522

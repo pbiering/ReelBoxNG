@@ -21,6 +21,7 @@
 # 20210214/pbev: add support for eHD boot "reboot"
 # 20210214/pbev: add support for eHD command
 # 20210220/pbev: add support for eHD hdplayer
+# 20211114/pbev: add missing LED defaults in SetLEDStatus
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -378,6 +379,11 @@ SetLEDStatus() {
 			BGREEN=0
 			;;
 		esac
+	else
+		# default
+		BRED=0
+		BBLUE=0
+		BGREEN=0
 	fi
 
 	VAL=$[ $brightness+256*($BRED+256*($BBLUE+256*$BGREEN)) ]

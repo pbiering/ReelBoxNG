@@ -1,9 +1,19 @@
-# requirements
+### requirements
 
 - grub linux boot option add
 	iomem=relaxed
 
-# RPM/akmods
+	FedoraLinux:
+	- edit /etc/sysconfig/grub
+		- add option to GRUB_CMDLINE_LINUX
+	- update grub configuration
+		# grub2-mkconfig -o /boot/grub2/grub.cfg
+
+## RPM/akmods
+
+- prepare basic RPM build
+$ cd ~
+$ rpmdev-setuptree
 
 - create "common" RPM
 $ rpmbuild -bb contrib/hdshm3.spec
@@ -17,9 +27,9 @@ $ rpmbuild -bb contrib/hdshm3-kmod.spec
 
 
 - install "common" RPM as user "root"
-# version="0.0.1-1.f33.x86_64"
+# version="0.0.1-1.fc35.x86_64"
 # cd /path/to/RPMS
-# rpm -Uhv hdshm3-common-$version.rpm hdshm3-$version.rpm kmod-hdshm3-$version.rpm hdshm3-$version.rpm
+# rpm -Uhv hdshm3-$version.rpm kmod-hdshm3-$version.rpm akmod-hdshm3-$version.rpm
 
 - run "akmods"
 akmods
