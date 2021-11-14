@@ -1,0 +1,24 @@
+[Unit]
+Description=ReelBoxNG Frontpanel VDR watch
+
+ConditionFileIsExecutable=/opt/reel/sbin/reelbox-control.sh
+
+Requires=reel-frontpanel.service
+After=reel-frontpanel-progress-8.service
+Before=vdr.service
+Conflicts=vdr.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-frontpanel-VDR-watch
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/reelbox-control.sh set_frontpanel text "vdr.service is not running"
+
+ExecStop=/opt/reel/sbin/reelbox-control.sh set_frontpanel text "."
+
+
+[Install]
+WantedBy=multi-user.target

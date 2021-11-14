@@ -1,0 +1,29 @@
+[Unit]
+Description=ReelBoxNG Frontpanel Initialization
+
+ConditionFileIsExecutable=/opt/reel/sbin/easyvdr-lcd
+ConditionFileIsExecutable=/opt/reel/sbin/easyvdr-led
+
+Requires=sys-devices-pnp0-00:01-tty-ttyS0.device
+
+After=sys-devices-pnp0-00:01-tty-ttyS0.device
+
+Before=reel-frontpanel-progress-0.service vdr.service
+
+
+[Service]
+SyslogIdentifier=ReelBoxNG-frontpanel-init
+
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/opt/reel/sbin/easyvdr-lcd start
+ExecStartPost=/opt/reel/sbin/easyvdr-led start
+
+ExecStop=/opt/reel/sbin/easyvdr-lcd progress stopping
+ExecStopPost=/opt/reel/sbin/easyvdr-lcd stop runlevel
+ExecStopPost=/opt/reel/sbin/easyvdr-led stop runlevel
+
+
+[Install]
+WantedBy=multi-user.target
