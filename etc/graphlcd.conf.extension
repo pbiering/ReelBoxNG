@@ -1,4 +1,5 @@
 
+## !! only required if /etc/graphlcd.conf is not already containing this section by default !!
 [st7565r-reel]
 # st7565r driver
 #  This is a driver module for the ST7565R based Reelbox frontpanel LCD
