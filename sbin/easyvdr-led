@@ -29,6 +29,7 @@
 # 20210118/pbev: replace 'cutting' by 'busy'
 # 20210131/pbev: specify max brightness for buttons during progress
 # 20210201/pbev: disable power LED on "started" and during "reboot"
+# 20210802/pbev: reduce brightness of power LED in power=off case from 8 (default by control script) to $BPOWEROFF
 
 progname="$(basename "$0")"
 
@@ -155,7 +156,7 @@ setLED() {
 				;;
 			    stop)
 				/opt/reel/sbin/reelbox-control.sh set_led_status ALL off
-				/opt/reel/sbin/reelbox-control.sh set_led_status power on
+				/opt/reel/sbin/reelbox-control.sh set_led_status power on ${BPOWEROFF:-8}
 				/opt/reel/sbin/reelbox-control.sh set_led_button off
 				;;
 			    error)
