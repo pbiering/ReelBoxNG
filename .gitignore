@@ -50,3 +50,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# compiled binaries
+src-reelvdr/utils/reelbox-control/reelbox-ctrld
+src-reelvdr/utils/reelfpctl/reelfpctl
+src-reelvdr/utils/reelfpctl/reelfpctl1
