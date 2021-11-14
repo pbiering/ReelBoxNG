@@ -20,9 +20,9 @@ BCOLOR="blue" # Color of button LEDs (blue/pink/red/off)
 GRAPHLCDIMAGEDIR="/opt/reel/share/images"
 
 ## LCD image prefix ("brand")
-#GRAPHLCDIMAGEPREFIX="image-128x64-reelboxng-"
-GRAPHLCDIMAGEPREFIX="image-128x64-bm2lts-"
-GRAPHLCDIMAGEPREFIX="image-128x64-easyvdr-"
+GRAPHLCDIMAGEPREFIX="image-128x64-reelboxng-"
+#GRAPHLCDIMAGEPREFIX="image-128x64-bm2lts-"
+#GRAPHLCDIMAGEPREFIX="image-128x64-easyvdr-"
 
 
 ### eHD
