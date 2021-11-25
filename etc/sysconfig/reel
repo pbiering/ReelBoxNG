@@ -16,6 +16,10 @@ BCONTROL="1" # Brightness of button LEDs
 BSTATUS="8" # Brightness of status LEDs
 BCOLOR="blue" # Color of button LEDs (blue/pink/red/off)
 
+## Display
+#BLACKDISP="yes" # Activate when display is black (non-reflective LCD)
+#DBRIGHT="0" # Enforce brightness in power-off state (regardless of LCD type)
+
 ## location of images for LCD
 GRAPHLCDIMAGEDIR="/opt/reel/share/images"
 
