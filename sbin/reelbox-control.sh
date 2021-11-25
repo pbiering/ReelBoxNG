@@ -22,6 +22,8 @@
 # 20210214/pbev: add support for eHD command
 # 20210220/pbev: add support for eHD hdplayer
 # 20211114/pbev: add missing LED defaults in SetLEDStatus
+# 20211125/pbev: add support for contrast with defaults for reflective and black LCD
+# 20211125/pbev: add support for brightness with defaults for reflective and black LCD in 'active' and 'power-off' state
 
 [ -e /etc/default/reel-globals ] && . /etc/default/reel-globals
 [ -e /etc/sysconfig/reel ] && . /etc/sysconfig/reel
@@ -46,11 +48,15 @@ BLACKDISP=${BLACKDISP:-no}
 HD_NETD_IP_EHD="192.168.99.129" # hardcoded in eHD boot image
 
 
-# set brightness depending on display
+# set brightness ('active' and 'power-off') and contrast depending on display
 if [ "$BLACKDISP" = "yes" ] ; then
-	DBRIGHT=${DBRIGHT:-8}
+	DBRIGHT=${DBRIGHT:-255}
+	DBRIGHTOFF=${DBRIGHTOFF:-8}
+	DCONTRAST=${DCONTRAST:-192}
 else
-	DBRIGHT=${DBRIGHT:-0}
+	DBRIGHT=${DBRIGHT:-128}
+	DBRIGHTOFF=${DBRIGHTOFF:-0}
+	DCONTRAST=${DCONTRAST:-255}
 fi
 
 
@@ -295,16 +301,16 @@ SetFrontpanel() {
 		true
 		;;
 	    start)
-		Syslog "INFO" "disable display of clock, set brightness to full"
-		$REELFPCTL -displaymode $NOCLOCK -brightness 99
+		Syslog "INFO" "set LCD, disable display of clock, set brightness to $DBRIGHT, contrast to $DCONTRAST"
+		$REELFPCTL -displaymode $NOCLOCK -brightness $DBRIGHT -contrast $DCONTRAST
 		sleep 0.1
 		;;
 	    stop)
-		Syslog "INFO" "clear LCD, display clock, set brightness depending on display type: $DBRIGHT, enable wakeup by remote control"
+		Syslog "INFO" "clear LCD, display clock, set brightness to $DBRIGHTOFF, enable wakeup by remote control"
 		# TODO: call stop function
 		# 13000001: with WoL (orig reelvdrd)
 		# 13000000: without WoL (orig reelvdrd)
-		$REELFPCTL -displaymode $CLOCK -clearlcd -brightness $DBRIGHT -pwrctl 13000000
+		$REELFPCTL -displaymode $CLOCK -clearlcd -brightness $DBRIGHTOFF -pwrctl 13000000
 		sleep 0.1
 		;;
 	    text)
