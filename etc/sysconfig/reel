@@ -55,6 +55,9 @@ HD_NETD_TIMEOUT="10"
 ## Default file where next wakeup is stored
 WAKEUP_FILE_DEFAULT="/run/vdr/next-timer-reel"
 
+## Wakeup after maximum days (in case no timer is active)
+WAKEUP_DAYS_MAX="4"
+
 
 ### Netceiver
 
