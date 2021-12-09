@@ -63,6 +63,7 @@ src-reelvdr/utils/hdshm3/x86/hdctrld/hdctrld
 src-reelvdr/utils/hdshm3/x86/hdfbctl/hdfbctl
 src-reelvdr/utils/hdshm3/x86/shmnetd/shmnetd
 src-reelvdr/utils/hdshm3/x86/hdtsplay/hdtsplay
+src-reelvdr/utils/ppmtofb/ppmtofb
 
 # uncompressed images
 bin-reelvdr/eHD/*.bin

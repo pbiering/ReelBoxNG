@@ -20,7 +20,7 @@ remote-rbfp0.7          0000000100010008
 remote-rbfp0.8          0000000100010009
 remote-rbfp0.9          000000010001000A
 remote-rbfp0.Info       0000000100010166
-remote-rbfp0.Play/Pause 00000001000100CF
+remote-rbfp0.Play       00000001000100CF
 remote-rbfp0.Pause      0000000100010077
 remote-rbfp0.Stop       0000000100010080
 remote-rbfp0.Record     00000001000100A7
