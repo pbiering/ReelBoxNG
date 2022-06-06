@@ -1,11 +1,9 @@
-# start vdr-fbfe
+# start Xorg Server
 
 [Unit]
 Description=ReelBox Xorg Start
 
 ConditionFileIsExecutable=/usr/bin/Xorg
-
-#After=network.target
 
 Before=vdr.service reel-Xorg-splash.service
 
@@ -15,8 +13,8 @@ SyslogIdentifier=ReelBoxNG-Xorg-Start
 
 Type=simple
 
+ExecStartPre=/bin/bash -c "while true; do if [ -e /dev/dri/renderD128 ]; then break; fi; sleep 1; done"
 ExecStart=/usr/bin/Xorg -nocursor -s 999
-
 
 [Install]
 WantedBy=multi-user.target
