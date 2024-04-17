@@ -4,9 +4,13 @@ Description=ReelBoxNG Frontpanel Initialization
 ConditionFileIsExecutable=/opt/reel/sbin/easyvdr-lcd
 ConditionFileIsExecutable=/opt/reel/sbin/easyvdr-led
 
-Requires=sys-devices-pnp0-00:01-tty-ttyS0.device
+# kernel < 6.8
+#Requires=sys-devices-pnp0-00:01-tty-ttyS0.device
+#After=sys-devices-pnp0-00:01-tty-ttyS0.device
 
-After=sys-devices-pnp0-00:01-tty-ttyS0.device
+# kernel >= 6.8
+Requires=sys-devices-pnp0-00:01-00:01:0-00:01:0.0-tty-ttyS0.device
+After=sys-devices-pnp0-00:01-00:01:0-00:01:0.0-tty-ttyS0.device
 
 Before=reel-frontpanel-progress-0.service vdr.service
 
